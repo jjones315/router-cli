@@ -1,10 +1,3 @@
-export interface RouterCliOptions {
-    source: string;
-    sourceAlias?: string;
-    output: string;
-    verbose: boolean;
-}
-
 export type ModuleImport = {
     default?: string;
     named?: Array<string | { source: string, alias: string }>;
@@ -28,7 +21,6 @@ export type RouteData = {
 export type RouteNaming = {
     route: string;
     id: string;
-    routeOptions: string;
     component: string;
     errorComponent: string;
     pendingComponent: string;

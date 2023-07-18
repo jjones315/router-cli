@@ -1,0 +1,50 @@
+{
+  "name": "@router-cli/tanstack-router",
+  "author": "jjones315",
+  "license": "MIT",
+  "repository": "https://github.com/jjones315/router-cli.git",
+  "version": "0.0.1",
+  "description": "File based routing cli for @tanstack/router.",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
+    }
+  },
+  "type": "commonjs",
+  "bin": {
+    "router-cli": "bin/router-cli.js"
+  },
+  "scripts": {
+    "preinstall": "npx only-allow pnpm",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "pnpm build:cjs && pnpm build:esm",
+    "build:cjs": "tsc -p tsconfig.build.json --module commonjs --outDir dist/cjs --target es5 --downlevelIteration",
+    "build:esm": "tsc -p tsconfig.build.json --module esNext --outDir dist/esm --target es6",
+    "types-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "fast-glob": "^3.2.12",
+    "yargs": "^17.7.2"
+  },
+  "keywords": [
+    "@tanstack",
+    "@tanstack/router",
+    "router",
+    "cli",
+    "file-routing",
+    "nextjs"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.4.2",
+    "@types/yargs": "^17.0.24",
+    "typescript": "^5.1.6"
+  }
+}

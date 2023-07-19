@@ -180,52 +180,12 @@ const createTree = ({ layouts, pages }: { layouts: RouteMap, pages: RouteMap }) 
 }
 
 const generateCode = async ({ appRoutes, routeTree }: { appRoutes: AppRoutes, routeTree: RouteItem[] }) => {
-    function createRoute(item: RouteItem, parent: RouteItem | undefined) {
-        const options: string[] = [];
-        options.push(`getParentRoute: () => ${parent?.naming?.route ?? "rootRoute"},`);
-
-        if (item.data.isEndpoint) {
-            options.push(`path: "${item.relativeRoute}",`);
-        }
-        else {
-            options.push(`id: "${item.naming.id}",`);
-        }
-
-        if (item.data.exports.errorComponent) {
-            options.push(`errorComponent: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.errorComponent} })))` : item.naming.errorComponent},`);
-        }
-
-        if (item.data.exports.pendingComponent) {
-            options.push(`pendingComponent: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.pendingComponent} })))` : item.naming.pendingComponent},`);
-        }
-
-        if (item.data.exports.routeComponent) {
-            options.push(`component: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.routeComponent} })))` : item.naming.component},`);
-        }
-
-        let result:string[] = ["\n//-- " + item.fullRoute];
-
-        if (item.data.config) {
-            result.push(`const ${item.naming.routeGenerated} = new Route({`);
-            result.push(getIndent(1) + options.join("\n" + getIndent(1)));
-            result.push("});");
-            result.push("");
-            result.push(`export const ${item.naming.route} = new Route(${item.naming.routeConfig});`);
-        }
-        else{
-            result.push(`export const ${item.naming.route} = new Route({`);
-            result.push(getIndent(1) + options.join("\n" + getIndent(1)));
-            result.push("});");
-        }
-        result.push("");
-        result.push(`export const ${item.naming.configureRouteFunc} = createRouteConfigurator(${item.data.config ? item.naming.routeGenerated : item.naming.route }).configure;`);
-        return result.join("\n");
-    }
-
     const imports: string[] = [];
 
     const routeDefinitions: string[] = [];
     let routes: string[] = [];
+    let generatedRoutesMap: string[] = [];
+    let generatedLayoutsMap: string[] = [];
 
     if (appRoutes.app) {
         imports.push(`import App from "${trimExt(appRoutes.app)}"`);
@@ -243,8 +203,15 @@ const generateCode = async ({ appRoutes, routeTree }: { appRoutes: AppRoutes, ro
         const indent = getIndent(depth);
         items.forEach(item => {
             imports.push(...getRouteImports(item));
-            routeDefinitions.push(createRoute(item, parent));
-
+            const { route, generatedRouteMap } = generateRouteCode(item, parent);
+            routeDefinitions.push(route);
+            if(item.data.isLayout){
+                generatedLayoutsMap.push(generatedRouteMap);
+            }
+            else{
+                generatedRoutesMap.push(generatedRouteMap);
+            }
+            
             if (item.children.length > 0) {
                 routes.push(indent + `${item.naming.route}.addChildren([`);
                 navigateTree(item.children, item);
@@ -281,6 +248,14 @@ ${routeDefinitions.join("\n")}
 export const routeTree = rootRoute.addChildren([
 ${routes.join("\n")}
 ]);
+
+const generatedLayouts = {
+    ${generatedLayoutsMap.join("\n")}
+    } as const;
+
+const generatedRoutes = {
+${generatedRoutesMap.join("\n")}
+} as const;
 `;
 
 
@@ -330,4 +305,56 @@ export const generate = async (config: RouterCliConfig, verbose: boolean) => {
         fs.writeFileSync(config.output, latestOutput)
         currentOutput = latestOutput;
     }
+}
+
+function generateRouteCode(item: RouteItem, parent: RouteItem | undefined) {
+    const definition = generateRouteDefinition(item, parent);
+
+    let route: string;
+    let generatedRouteMap: string = `${getIndent(1)}"${item.data.isEndpoint ? item.fullRoute : item.naming.id}": `;
+
+
+    if (item.data.config) {
+        route = `const ${item.naming.routeGenerated} = ${definition}\n` +
+            `export const ${item.naming.route} = new Route(mergeConfig(${item.naming.routeGenerated}, ${item.naming.routeConfig}));\n`;
+
+        generatedRouteMap += `${item.naming.routeGenerated},`
+    }
+    else {
+        route = `export const ${item.naming.route} = ${definition}\n`;
+        generatedRouteMap += `${item.naming.route},`
+    }
+
+    return {
+        route,
+        generatedRouteMap
+    }
+}
+
+function generateRouteDefinition(item: RouteItem, parent: RouteItem | undefined) {
+    const options: string[] = [];
+    options.push(`getParentRoute: () => ${parent?.naming?.route ?? "rootRoute"},`);
+
+    if (item.data.isEndpoint) {
+        options.push(`path: "${item.relativeRoute}",`);
+    }
+    else {
+        options.push(`id: "${item.naming.id}",`);
+    }
+
+    if (item.data.exports.errorComponent) {
+        options.push(`errorComponent: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.errorComponent} })))` : item.naming.errorComponent},`);
+    }
+
+    if (item.data.exports.pendingComponent) {
+        options.push(`pendingComponent: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.pendingComponent} })))` : item.naming.pendingComponent},`);
+    }
+
+    if (item.data.exports.routeComponent) {
+        options.push(`component: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.routeComponent} })))` : item.naming.component},`);
+    }
+
+    return `new Route({
+${getIndent(1) + options.join("\n" + getIndent(1))}
+});`
 }

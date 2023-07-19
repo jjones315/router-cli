@@ -1,4 +1,4 @@
-import { RouteExports } from "src/definitions/types";
+import { RouteExports } from "../definitions/types";
 
 export const getRouteExports = (content: string): RouteExports => ({
     routeComponent: /^export\s+default\s/gm.test(content),

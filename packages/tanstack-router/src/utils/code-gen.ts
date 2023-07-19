@@ -1,5 +1,5 @@
-import { routeExportNames } from "src/definitions/contants";
-import { RouteData, RouteNaming, RouteItem, ModuleImport } from "src/definitions/types";
+import { routeExportNames } from "../definitions/constants";
+import { RouteData, RouteNaming, RouteItem, ModuleImport } from "../definitions/types";
 
 const toFriendlyName = (str: string) => {
     const joined = str
@@ -24,9 +24,10 @@ export const getRouteNaming = ({ route, data }: { route: string, data: RouteData
         pendingComponent: componentName + "PendingComponent",
         route: routeName,
         routeConfig: baseName + "Config",
+        configureRouteFunc: "configure" + componentName + "Route",
+        routeGenerated: baseName + "Generated",
     };
 }
-
 
 export const getRouteImports = (item: RouteItem) => {
     const { data } = item;

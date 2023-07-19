@@ -1,4 +1,4 @@
-import { ModuleImport, RouteData, RouteExports, RouteItem, RouteNaming } from "src/definitions/types";
+import { ModuleImport, RouteData, RouteExports, RouteItem, RouteNaming } from "../definitions/types";
 import clc from "cli-color";
 
 export const trimCharEnd = (src: string, char: string) => {

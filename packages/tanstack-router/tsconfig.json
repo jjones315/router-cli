@@ -5,7 +5,6 @@
         "isolatedModules": true,
         "outDir": "./dist",
         "allowSyntheticDefaultImports": true,
-        "baseUrl": ".",
         "declaration": true,
         "pretty": true,
         "skipLibCheck": true,
@@ -18,11 +17,12 @@
             "DOM.Iterable",
             "ES2021"
         ],
-        "target": "ES2019"
+        "target": "ES2019",
     },
     "include": ["./src/**/*"],
     "exclude": [
         "./src/**/*.test.ts",
         "dist"
-    ]
+    ],
+
 }

@@ -1,5 +1,5 @@
 import clc from "cli-color";
-import { RouteItem } from "src/definitions/types";
+import { RouteItem } from "../definitions/types";
 
 export const printRouteTree = (route: RouteItem, last: boolean, indent: string = "") => {
     let line: string = indent + "|-- ";

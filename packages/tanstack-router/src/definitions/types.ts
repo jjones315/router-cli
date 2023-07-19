@@ -21,6 +21,8 @@ export type RouteData = {
 export type RouteNaming = {
     route: string;
     id: string;
+    routeGenerated: string;
+    configureRouteFunc: string;
     component: string;
     errorComponent: string;
     pendingComponent: string;

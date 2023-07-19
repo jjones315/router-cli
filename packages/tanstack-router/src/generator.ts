@@ -4,7 +4,7 @@ import { template } from './template';
 import { AppRoutes, RouteData, RouteItem, RouteItemMap, RouteMap, RouteSource } from './definitions/types';
 import { getMapKeys, getRouteExports, getRouteNaming, trimCharEnd, trimExt, getIndent, getRouteCharacteristics, transformRoute, sortByDepth, getRouteImports, printRouteTree, verboseLog } from './utils';
 import { RouterCliConfig } from './definitions/schema';
-import { routeExportNames } from './definitions/contants';
+import { routeExportNames } from './definitions/constants';
 
 
 const getRoutes = async (options: RouterCliConfig, verbose: boolean) => {
@@ -16,6 +16,8 @@ const getRoutes = async (options: RouterCliConfig, verbose: boolean) => {
         options.source + '/_app.tsx', //root
         options.source + '/_not-found.tsx', //not found
     ], { onlyFiles: true });
+
+    routes.sort();
 
     const configs = await glob([
         options.source + '/**/[\\w[-]*.page.config.tsx', // Page config
@@ -201,39 +203,37 @@ const generateCode = async ({ appRoutes, routeTree }: { appRoutes: AppRoutes, ro
             options.push(`component: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.routeComponent} })))` : item.naming.component},`);
         }
 
-        
-
+        let result:string[] = ["\n//-- " + item.fullRoute];
 
         if (item.data.config) {
-            return `export const ${item.naming.route} = new Route({
-${getIndent(1)}...${item.naming.routeConfig},
-${getIndent(1)}...${optionsSrc}["${item.fullRoute}"],
-});`;
+            result.push(`const ${item.naming.routeGenerated} = new Route({`);
+            result.push(getIndent(1) + options.join("\n" + getIndent(1)));
+            result.push("});");
+            result.push("");
+            result.push(`export const ${item.naming.route} = new Route(${item.naming.routeConfig});`);
         }
-
-        return `export const ${item.naming.route} = new Route({
-            ${getIndent(1) + options.join("\n" + getIndent(1))}
-        });`;
+        else{
+            result.push(`export const ${item.naming.route} = new Route({`);
+            result.push(getIndent(1) + options.join("\n" + getIndent(1)));
+            result.push("});");
+        }
+        result.push("");
+        result.push(`export const ${item.naming.configureRouteFunc} = createRouteConfigurator(${item.data.config ? item.naming.routeGenerated : item.naming.route }).configure;`);
+        return result.join("\n");
     }
 
     const imports: string[] = [];
 
-    const pageOptions: string[] = [];
-    const pageRoutesGenerated: string[] = [];
-    const pageRoutesImported: string[] = [];
-
-    const layoutOptions: string[] = [];
-    const layoutRoutesGenerated: string[] = [];
-    const layoutRoutesImported: string[] = [];
+    const routeDefinitions: string[] = [];
     let routes: string[] = [];
 
     if (appRoutes.app) {
         imports.push(`import App from "${trimExt(appRoutes.app)}"`);
-        pageRoutesGenerated.push("export const rootRoute = new RootRoute({ component: App });");
+        routeDefinitions.push("export const rootRoute = new RootRoute({ component: App });");
     }
     else {
         imports.push(`import Outlet from ""@tanstack/router""`);
-        pageRoutesGenerated.push("export const rootRoute = new RootRoute({component: Outlet});");
+        routeDefinitions.push("export const rootRoute = new RootRoute({component: Outlet});");
     }
 
 
@@ -243,30 +243,7 @@ ${getIndent(1)}...${optionsSrc}["${item.fullRoute}"],
         const indent = getIndent(depth);
         items.forEach(item => {
             imports.push(...getRouteImports(item));
-
-            if (item.data.isLayout) {
-                const route = createRouteDefinition(item, parent, "layoutOptions");
-                if (item.data.config) {
-                    layoutRoutesImported.push(route);
-                }
-                else {
-                    layoutRoutesGenerated.push(route);
-                }
-                layoutOptions.push(createOptionMap(item, parent));
-            }
-
-            if (item.data.isEndpoint) {
-                pageOptions.push(createOptionMap(item, parent));
-                if (!item.data.isLayout) {
-                    const route = createRouteDefinition(item, parent, "pageOptions");
-                    if (item.data.config) {
-                        pageRoutesImported.push(route);
-                    }
-                    else {
-                        pageRoutesGenerated.push(route);
-                    }
-                }
-            }
+            routeDefinitions.push(createRoute(item, parent));
 
             if (item.children.length > 0) {
                 routes.push(indent + `${item.naming.route}.addChildren([`);
@@ -286,7 +263,7 @@ ${getIndent(1)}...${optionsSrc}["${item.fullRoute}"],
 
     if (appRoutes.notFound) {
         imports.push(`import NotFound from "${trimExt(appRoutes.notFound)}"`);
-        pageRoutesGenerated.push(
+        routeDefinitions.push(
             `export const notFoundRoute = new Route({ 
     getParentRoute: () => rootRoute, 
     path: "*", 
@@ -299,22 +276,7 @@ ${getIndent(1)}...${optionsSrc}["${item.fullRoute}"],
     }
 
     const output = `
-// Layouts.
-${layoutRoutesGenerated.join("\n")}
-const layoutOptions = {${layoutOptions.join("")}
-} as const;
-export const configureLayout = createRouteConfigurator(layoutOptions).configure;
-
-${layoutRoutesImported.join("\n")}
-
-// Pages.
-${pageRoutesGenerated.join("\n")}
-const pageOptions = {${pageOptions.join("")}
-} as const;
-
-export const configurePage = createRouteConfigurator(pageOptions).configure;
-
-${pageRoutesImported.join("\n")}
+${routeDefinitions.join("\n")}
 
 export const routeTree = rootRoute.addChildren([
 ${routes.join("\n")}

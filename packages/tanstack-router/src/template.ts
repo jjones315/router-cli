@@ -33,71 +33,38 @@ type LateRouteOptions<
     TContext extends MergeFromParent<TAllParentContext, TRouteContext> = MergeFromParent<TAllParentContext, TRouteContext>
 > = Omit<RouteOptions<TParentRoute, TCustomId, TPath, TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>, "getParentRoute" | "id" | "path" | "component" | "pendingComponent" | "errorComponent">;
 
-
 function createRouteConfigurator<
-    TGeneratedRoutes extends { [route: string]: TypedRouteOptions },
->(generatedRoute: TGeneratedRoutes) {
+    TRoute extends AnyRoute = AnyRoute,
+>(generatedRoute: TRoute) {
     return {
         configure: <
-            TRoute extends keyof TGeneratedRoutes,
             TLoader = unknown,
             TParentSearchSchema extends {} = {},
             TSearchSchema extends AnySearchSchema = {},
             TFullSearchSchema extends AnySearchSchema = TSearchSchema,
             TParentParams extends AnyPathParams = {},
-            TParams = Record<ParsePathParams<TGeneratedRoutes[TRoute]["__types"]["path"]>, string>,
+            TParams = Record<ParsePathParams<TRoute['__types']["path"]>, string>,
             TAllParams = TParams,
             TParentContext extends AnyContext = AnyContext,
-            TAllParentContext extends IsAny<TGeneratedRoutes[TRoute]["__types"]["parentRoute"]['__types']['allParams'],
+            TAllParentContext extends IsAny<TRoute['__types']["parentRoute"]['__types']['allParams'],
                 TParentContext,
-                TGeneratedRoutes[TRoute]["__types"]["parentRoute"]['__types']['allParams'] & TParentContext> = IsAny<TGeneratedRoutes[TRoute]["__types"]["parentRoute"]['__types']['allParams'],
+                TRoute['__types']["parentRoute"]["__types"]['allParams'] & TParentContext> = IsAny<TRoute['__types']["parentRoute"]['__types']['allParams'],
                     TParentContext,
-                    TGeneratedRoutes[TRoute]["__types"]["parentRoute"]['__types']['allParams'] & TParentContext>,
+                    TRoute['__types']["parentRoute"]['__types']['allParams'] & TParentContext>,
             TRouteContext extends RouteContext = RouteContext,
             TContext extends MergeFromParent<TAllParentContext, TRouteContext> = MergeFromParent<TAllParentContext, TRouteContext>
-        >(route: TRoute, options: LateRouteOptions<TGeneratedRoutes[TRoute]["__types"]["parentRoute"], TGeneratedRoutes[TRoute]["__types"]["customId"], TGeneratedRoutes[TRoute]["__types"]["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>):
-            RouteOptions<TGeneratedRoutes[TRoute]["__types"]["parentRoute"], TGeneratedRoutes[TRoute]["__types"]["customId"], TGeneratedRoutes[TRoute]["__types"]["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext> => {
+        >(options: LateRouteOptions<TRoute['__types']["parentRoute"], TRoute['__types']["customId"], TRoute['__types']["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>):
+            RouteOptions<TRoute['__types']["parentRoute"], TRoute['__types']["customId"], TRoute['__types']["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext> => {
             return {
                 ...options,
-                getParentRoute: generatedRoute.getParentRoute,
-                id: (generatedRoute as any).id,
-                path: generatedRoute.path,
-                pendingComponent: generatedRoute.pendingComponent,
-                errorComponent: generatedRoute.errorComponent,
-                component: generatedRoute.component,
+                getParentRoute: generatedRoute.options.getParentRoute,
+                id: (generatedRoute.options as any).id,
+                path: (generatedRoute.options as any).path,
+                pendingComponent: generatedRoute.options.pendingComponent,
+                errorComponent: generatedRoute.options.errorComponent,
+                component: generatedRoute.options.component,
             } as any;
         },
     }
-}
-
-type TypedRouteOptions<
-    TParentRoute extends AnyRoute = AnyRoute,
-    TCustomId extends string = string,
-    TPath extends string = string,
-> = {
-    getParentRoute: () => TParentRoute,
-    id: TCustomId,
-    path: TPath,
-    pendingComponent: RouteComponent,
-    errorComponent: RouteComponent<{
-        error: Error;
-        info: {
-            componentStack: string;
-        };
-    }>,
-    component: RouteComponent,
-    __types: {
-        parentRoute: TParentRoute,
-        customId: TCustomId,
-        path: TPath,
-    }
-}
-
-function routeConfig<
-    TParentRoute extends AnyRoute = AnyRoute,
-    TCustomId extends string = string,
-    TPath extends string = string,
->(options: RouteOptions<TParentRoute, TCustomId, TPath>): TypedRouteOptions<TParentRoute, TCustomId, TPath> {
-    return options as any
 }
 `;

@@ -8,10 +8,9 @@ import { lazy, RootRoute, Route, AnyContext, AnyRoute, AnySearchSchema, ParsePat
 /* {{outlet}} */
 
 // Types and configuration utility.
+// Types and configuration utility.
 type IsAny<T, Y, N> = 1 extends 0 & T ? Y : N;
 type MergeFromParent<T, U> = IsAny<T, U, T & U>;
-type AnyPathParams = {};
-
 type LateRouteOptions<
     TParentRoute extends AnyRoute = AnyRoute,
     TCustomId extends string = string,
@@ -20,7 +19,7 @@ type LateRouteOptions<
     TParentSearchSchema extends {} = {},
     TSearchSchema extends AnySearchSchema = {},
     TFullSearchSchema extends AnySearchSchema = TSearchSchema,
-    TParentParams extends AnyPathParams = {},
+    TParentParams extends {} = {},
     TParams = Record<ParsePathParams<TPath>, string>,
     TAllParams = TParams,
     TParentContext extends AnyContext = AnyContext,
@@ -38,12 +37,12 @@ function createRouteConfigurator<
 >(generatedRoute: TRoute) {
     return {
         configure: <
-            TLoader = unknown,
+            TLoader = TRoute['__types']["loader"],
             TParentSearchSchema extends {} = {},
             TSearchSchema extends AnySearchSchema = {},
             TFullSearchSchema extends AnySearchSchema = TSearchSchema,
-            TParentParams extends AnyPathParams = {},
-            TParams = Record<ParsePathParams<TRoute['__types']["path"]>, string>,
+            TParentParams extends {} = {},
+            TParams = TRoute['__types']["params"],
             TAllParams = TParams,
             TParentContext extends AnyContext = AnyContext,
             TAllParentContext extends IsAny<TRoute['__types']["parentRoute"]['__types']['allParams'],

@@ -184,8 +184,6 @@ const generateCode = async ({ appRoutes, routeTree }: { appRoutes: AppRoutes, ro
 
     const routeDefinitions: string[] = [];
     let routes: string[] = [];
-    let generatedRoutesMap: string[] = [];
-    let generatedLayoutsMap: string[] = [];
 
     if (appRoutes.app) {
         imports.push(`import App from "${trimExt(appRoutes.app)}"`);
@@ -203,14 +201,8 @@ const generateCode = async ({ appRoutes, routeTree }: { appRoutes: AppRoutes, ro
         const indent = getIndent(depth);
         items.forEach(item => {
             imports.push(...getRouteImports(item));
-            const { route, generatedRouteMap } = generateRouteCode(item, parent);
+            const { route } = generateRouteCode(item, parent);
             routeDefinitions.push(route);
-            if(item.data.isLayout){
-                generatedLayoutsMap.push(generatedRouteMap);
-            }
-            else{
-                generatedRoutesMap.push(generatedRouteMap);
-            }
             
             if (item.children.length > 0) {
                 routes.push(indent + `${item.naming.route}.addChildren([`);
@@ -248,14 +240,6 @@ ${routeDefinitions.join("\n")}
 export const routeTree = rootRoute.addChildren([
 ${routes.join("\n")}
 ]);
-
-const generatedLayouts = {
-    ${generatedLayoutsMap.join("\n")}
-    } as const;
-
-const generatedRoutes = {
-${generatedRoutesMap.join("\n")}
-} as const;
 `;
 
 
@@ -311,23 +295,16 @@ function generateRouteCode(item: RouteItem, parent: RouteItem | undefined) {
     const definition = generateRouteDefinition(item, parent);
 
     let route: string;
-    let generatedRouteMap: string = `${getIndent(1)}"${item.data.isEndpoint ? item.fullRoute : item.naming.id}": `;
-
 
     if (item.data.config) {
-        route = `const ${item.naming.routeGenerated} = ${definition}\n` +
-            `export const ${item.naming.route} = new Route(mergeConfig(${item.naming.routeGenerated}, ${item.naming.routeConfig}));\n`;
-
-        generatedRouteMap += `${item.naming.routeGenerated},`
+        route = `export const ${item.naming.route} = new Route(createRouteOptions(${definition}, ${item.naming.routeConfig}));\n`;
     }
     else {
-        route = `export const ${item.naming.route} = ${definition}\n`;
-        generatedRouteMap += `${item.naming.route},`
+        route = `export const ${item.naming.route} = new Route(${definition});\n`;
     }
 
     return {
         route,
-        generatedRouteMap
     }
 }
 
@@ -354,7 +331,7 @@ function generateRouteDefinition(item: RouteItem, parent: RouteItem | undefined)
         options.push(`component: ${item.data.isLazy ? `lazy(() => import("${trimExt(item.data.components.appSource)}").then(mod => ({ "default": mod.${routeExportNames.routeComponent} })))` : item.naming.component},`);
     }
 
-    return `new Route({
+    return `{
 ${getIndent(1) + options.join("\n" + getIndent(1))}
-});`
+}`
 }

@@ -1,6 +1,7 @@
 export const template = `
 // Generated Code, changes to this file will be overridden.
 /* eslint-disable */
+import type { z, ZodType } from "zod";
 import { lazy, RootRoute, Route, AnyContext, AnyRoute, AnySearchSchema, ParsePathParams, RouteContext, RouteOptions, RouteComponent } from "@tanstack/router";
 /* {{imports}} */
 
@@ -8,108 +9,53 @@ import { lazy, RootRoute, Route, AnyContext, AnyRoute, AnySearchSchema, ParsePat
 /* {{outlet}} */
 
 // Types and configuration utility.
-type GeneratedRoutes = typeof generatedRoutes;
-type GeneratedLayouts = typeof generatedLayouts;
 type IsAny<T, Y, N> = 1 extends 0 & T ? Y : N;
 type MergeFromParent<T, U> = IsAny<T, U, T & U>;
+type SelectSchemaType<TLateSchema extends ZodType<any> | {}, TGenerated> = TLateSchema extends ZodType<any> ? z.TypeOf<TLateSchema> : TGenerated;
 type AnyPathParams = {};
 
-type LateRouteOptions<
+export type LateRouteOptions<TParamsSchema extends ZodType<any> | {} = {}, TSearchSchema extends ZodType<any> | {} = {}> = {
+    paramsSchema?: TParamsSchema,
+    searchSchema?: TSearchSchema,
+}
+
+export function routeOptions<TParamsSchema extends ZodType<any> | {} = {}, TSearchSchema extends ZodType<any> | {} = {}>(options: LateRouteOptions<TParamsSchema, TSearchSchema>) {
+    return options;
+}
+
+function createRouteOptions<
     TParentRoute extends AnyRoute = AnyRoute,
     TCustomId extends string = string,
     TPath extends string = string,
     TLoader = unknown,
     TParentSearchSchema extends {} = {},
-    TSearchSchema extends AnySearchSchema = {},
-    TFullSearchSchema extends AnySearchSchema = TSearchSchema,
+    TSearchSchema extends ZodType<any> | {} = {},
+    TFullSearchSchema extends AnySearchSchema = SelectSchemaType<TSearchSchema, {}>,
     TParentParams extends AnyPathParams = {},
-    TParams = Record<ParsePathParams<TPath>, string>,
+    TLateParamsSchema extends ZodType<any> | {} = {},
+    TParams = SelectSchemaType<TLateParamsSchema, Record<ParsePathParams<TPath>, string>>,
     TAllParams = TParams,
     TParentContext extends AnyContext = AnyContext,
     TAllParentContext extends IsAny<TParentRoute['__types']['allParams'],
         TParentContext,
-        TParentRoute['__types']['allParams'] & TParentContext> = IsAny<TParentRoute['__types']['allParams'],
+        TParentRoute["__types"]['allParams'] & TParentContext> = IsAny<TParentRoute['__types']['allParams'],
             TParentContext,
             TParentRoute['__types']['allParams'] & TParentContext>,
     TRouteContext extends RouteContext = RouteContext,
-    TContext extends MergeFromParent<TAllParentContext, TRouteContext> = MergeFromParent<TAllParentContext, TRouteContext>
-> = Omit<RouteOptions<TParentRoute, TCustomId, TPath, TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>, "getParentRoute" | "id" | "path" | "component" | "pendingComponent" | "errorComponent">;
-
-export function configureRoute<
-    TRoute extends keyof GeneratedRoutes = keyof GeneratedRoutes,
-    TLoader = unknown,
-    TParentSearchSchema extends {} = {},
-    TSearchSchema extends AnySearchSchema = {},
-    TFullSearchSchema extends AnySearchSchema = TSearchSchema,
-    TParentParams extends AnyPathParams = {},
-    TParams = Record<ParsePathParams<GeneratedRoutes[TRoute]['__types']["path"]>, string>,
-    TAllParams = TParams,
-    TParentContext extends AnyContext = AnyContext,
-    TAllParentContext extends IsAny<GeneratedRoutes[TRoute]['__types']["parentRoute"]['__types']['allParams'],
-        TParentContext,
-        GeneratedRoutes[TRoute]['__types']["parentRoute"]["__types"]['allParams'] & TParentContext> = IsAny<GeneratedRoutes[TRoute]['__types']["parentRoute"]['__types']['allParams'],
-            TParentContext,
-            GeneratedRoutes[TRoute]['__types']["parentRoute"]['__types']['allParams'] & TParentContext>,
-    TRouteContext extends RouteContext = RouteContext,
-    TContext extends MergeFromParent<TAllParentContext, TRouteContext> = MergeFromParent<TAllParentContext, TRouteContext>
->(route: TRoute, options: LateRouteOptions<GeneratedRoutes[TRoute]['__types']["parentRoute"], GeneratedRoutes[TRoute]['__types']["customId"], GeneratedRoutes[TRoute]['__types']["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>):
-    LateRouteOptions<GeneratedRoutes[TRoute]['__types']["parentRoute"], GeneratedRoutes[TRoute]['__types']["customId"], GeneratedRoutes[TRoute]['__types']["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext> {
-    return options as any;
-};
-
-export function configureLayout<
-    TRoute extends keyof GeneratedLayouts = keyof GeneratedLayouts,
-    TLoader = unknown,
-    TParentSearchSchema extends {} = {},
-    TSearchSchema extends AnySearchSchema = {},
-    TFullSearchSchema extends AnySearchSchema = TSearchSchema,
-    TParentParams extends AnyPathParams = {},
-    TParams = Record<ParsePathParams<GeneratedLayouts[TRoute]['__types']["path"]>, string>,
-    TAllParams = TParams,
-    TParentContext extends AnyContext = AnyContext,
-    TAllParentContext extends IsAny<GeneratedLayouts[TRoute]['__types']["parentRoute"]['__types']['allParams'],
-        TParentContext,
-        GeneratedLayouts[TRoute]['__types']["parentRoute"]["__types"]['allParams'] & TParentContext> = IsAny<GeneratedLayouts[TRoute]['__types']["parentRoute"]['__types']['allParams'],
-            TParentContext,
-            GeneratedLayouts[TRoute]['__types']["parentRoute"]['__types']['allParams'] & TParentContext>,
-    TRouteContext extends RouteContext = RouteContext,
-    TContext extends MergeFromParent<TAllParentContext, TRouteContext> = MergeFromParent<TAllParentContext, TRouteContext>
->(route: TRoute, options: LateRouteOptions<GeneratedLayouts[TRoute]['__types']["parentRoute"], GeneratedLayouts[TRoute]['__types']["customId"], GeneratedLayouts[TRoute]['__types']["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>):
-    LateRouteOptions<GeneratedLayouts[TRoute]['__types']["parentRoute"], GeneratedLayouts[TRoute]['__types']["customId"], GeneratedLayouts[TRoute]['__types']["path"], TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext> {
-    return options as any;
-};
-
-function mergeConfig<
-    TParentRoute extends AnyRoute = AnyRoute,
-    TCustomId extends string = string,
-    TPath extends string = string,
-    TLoader = unknown,
-    TParentSearchSchema extends {} = {},
-    TSearchSchema extends AnySearchSchema = {},
-    TFullSearchSchema extends AnySearchSchema = TSearchSchema,
-    TParentParams extends AnyPathParams = {},
-    TParams = Record<ParsePathParams<TPath>, string>,
-    TAllParams = TParams,
-    TParentContext extends AnyContext = AnyContext,
-    TAllParentContext extends IsAny<TParentRoute['__types']['allParams'],
-        TParentContext,
-        TParentRoute['__types']['allParams'] & TParentContext> = IsAny<TParentRoute['__types']['allParams'],
-            TParentContext,
-            TParentRoute['__types']['allParams'] & TParentContext>,
-    TRouteContext extends RouteContext = RouteContext,
-    TContext extends MergeFromParent<TAllParentContext, TRouteContext> = MergeFromParent<TAllParentContext, TRouteContext>
+    TContext extends MergeFromParent<TAllParentContext, TRouteContext> = MergeFromParent<TAllParentContext, TRouteContext>,  
 >(
-    generated: Route<TParentRoute, TPath, any, TCustomId>,
-    options: LateRouteOptions<TParentRoute, TCustomId, TPath, TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>): 
-    RouteOptions<TParentRoute, TCustomId, TPath, TLoader, TParentSearchSchema, TSearchSchema, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext> {
+    generated: RouteOptions<TParentRoute, TCustomId, TPath, TLoader, TParentSearchSchema, any, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext>,
+    config: LateRouteOptions<TLateParamsSchema, TSearchSchema>
+): RouteOptions<TParentRoute, TCustomId, TPath, TLoader, TParentSearchSchema, SelectSchemaType<TSearchSchema, {}>, TFullSearchSchema, TParentParams, TParams, TAllParams, TParentContext, TAllParentContext, TRouteContext, TContext> {
     return {
-        ...options,
-        getParentRoute: generated.options.getParentRoute,
-        id: (generated.options as any).id,
-        path: (generated.options as any).path,
-        pendingComponent: generated.options.pendingComponent,
-        errorComponent: generated.options.errorComponent,
-        component: generated.options.component,
-    } as any;
+        getParentRoute: generated.getParentRoute,
+        id: (generated as any).id as TCustomId,
+        path: (generated as any).path as TPath,
+        pendingComponent: generated.pendingComponent,
+        errorComponent: generated.errorComponent,
+        component: generated.component,
+        validateSearch: config.searchSchema,
+        parseParams: (raw: any) => (config.searchSchema as any)?.parse(raw),
+    }
 }
 `;

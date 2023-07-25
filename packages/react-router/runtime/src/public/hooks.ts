@@ -1,6 +1,9 @@
 import {
-    LoaderFunction,
     NavigateOptions,
+    ParamParseKey,
+    PathMatch,
+    PathPattern,
+    useLocation,
     useNavigate,
     useParams,
     useRouteLoaderData,
@@ -13,92 +16,78 @@ import { getBasicPath } from '../utils/typed';
 import searchParamUtilities from '../utils/searchParams';
 import { useSuspendedPromise } from '../hooks/useSuspendedPromise';
 import { parseSchema } from '../utils/schemaParser';
+import { PickRoutesWithSchema } from '../utils/types';
+import { matchPathLogic } from './functions';
 
-export const pageHooks = <
+export const createHooks = <
     TPages extends Record<string, AnyRouteData>,
->(imports: Record<keyof TPages, () => Promise<AnyRoute>>) => {
-
-    const useImport = <TPath extends keyof TPages & string>(key: TPath) => {
-        const modulePromise = imports[key]();
-        const getter = useSuspendedPromise(modulePromise, [key]);
-        return getter as TPages[TPath];
-    }
-
-    return {
-        useNavigate: () => {
-            const navigate = useNavigate();
-            return useCallback(<TPath extends keyof TPages & string>(route: TypedToOrPath<TPath, TPages[TPath]> | "./" | "../", options?: NavigateOptions) => {
-                if (route === "./") {
-                    return navigate(0);
-                }
-                if (route === "../") {
-                    return navigate(-1);
-                }
-                return navigate(getBasicPath(route), options);
-            }, [navigate]);
-        },
-        useSearchParams<
-            TPath extends keyof TPages & string,
-            TRoute extends TPages[TPath] = TPages[TPath],
-            TSearch extends {} = {},
-            TSearchSchema extends TRoute["searchSchema"] & ParamSchema<TSearch> = TRoute["searchSchema"] & ParamSchema<TSearch>,
-        >(route: TPath) {
-            const module = useImport(route);
-            return useTypedSearchParams<TSearch>(module.searchSchema!);
-        },
-        useLoaderData<
-            TPath extends keyof TPages & string,
-            TRoute extends TPages[TPath] = TPages[TPath],
-            TLoaderFunc extends TRoute["loader"] & LoaderFunction = TRoute["loader"] & LoaderFunction,
-        >(route: TPath) {
-            const loaderData = useRouteLoaderData(route);
-            return loaderData as ReturnType<TLoaderFunc>;
-        },
-    }
-}
-
-export const layoutHooks = <
     TLayouts extends Record<string, AnyRouteData>,
->(imports: Record<keyof TLayouts, () => Promise<AnyRoute>>) => {
+>({ pageImports, layoutImports }: {
+    pageImports: Record<keyof TPages, () => Promise<AnyRoute>>,
+    layoutImports: Record<keyof TLayouts, () => Promise<AnyRoute>>,
+}) => {
+    type AllRoutes = TPages & TLayouts;
+    type RoutesWithParams = PickRoutesWithSchema<AllRoutes, "params">;
+    type RoutesWithSearchParams = PickRoutesWithSchema<AllRoutes, "search">;
 
-    const useImport = <TRoute extends keyof TLayouts>(key: TRoute) => {
-        const modulePromise = imports[key]();
-        const getter = useSuspendedPromise(modulePromise, [key]);
-        return getter as TLayouts[TRoute];
+    const useImport = <TRoute extends keyof AllRoutes & string>(key: TRoute) => {
+        const modulePromise = key.endsWith("/layout") ? layoutImports[key] : pageImports[key];
+        const getter = useSuspendedPromise(modulePromise(), [key]);
+        return getter as AllRoutes[TRoute];
     }
+
+    function useTypedNavigate(){
+        const navigate = useNavigate();
+        return useCallback(<TPath extends keyof TPages & string>(route: TypedToOrPath<TPath, TPages[TPath]> | number, options?: NavigateOptions) => {
+            if (typeof route === "number") {
+                return navigate(route);
+            }
+            return navigate(getBasicPath(route), options);
+        }, [navigate]);
+    }
+
+    function useSearchParams<
+        TPath extends keyof AllRoutes & keyof RoutesWithSearchParams & string
+    >(route: TPath) {
+        const module = useImport(route);
+        return useTypedSearchParams<RoutesWithSearchParams[TPath]>(module.searchSchema!);
+    }
+
+    function useTypedParams<
+        TPath extends keyof AllRoutes & keyof RoutesWithParams & string
+    >(route: TPath): RoutesWithParams[TPath] {
+        const module = useImport(route);
+        const params = useParams();
+        const schema = module.paramsSchema!
+        return useMemo(() => parseSchema(params, schema), [schema, params]);
+    }
+
+    function useLoaderData<
+        TPath extends keyof AllRoutes & string,
+    >(route: TPath) {
+        const loaderData = useRouteLoaderData(route);
+        return loaderData as AllRoutes[TPath]["__types"]["loader"];
+    };
+    
+    function useTypedMatch<
+        TParamKey extends ParamParseKey<TPath>, 
+        TPath extends keyof AllRoutes & string
+    >(pattern: PathPattern<TPath> | TPath): PathMatch<TParamKey> | null {
+        let { pathname } = useLocation();
+        return useMemo(
+          () => matchPathLogic<TParamKey, TPath>(pattern, pathname),
+          [pathname, pattern]
+        );
+    };
 
     return {
-        useLayoutParams<
-            TPath extends keyof TLayouts & string,
-            TRoute extends TLayouts[TPath] = TLayouts[TPath],
-            TParams extends {} = {},
-            TParamsSchema extends TRoute["paramsSchema"] & ParamSchema<TParams> = TRoute["paramsSchema"] & ParamSchema<TParams>,
-        >(key: TPath): TParams {
-            const module = useImport(key);
-            const params = useParams();
-            const schema = module.paramsSchema!
-            return useMemo(() => parseSchema(params, schema), [schema, params]);
-        },
-        useLayoutSearchParams<
-            TPath extends keyof TLayouts & string,
-            TRoute extends TLayouts[TPath] = TLayouts[TPath],
-            TSearch extends {} = {},
-            TSearchSchema extends TRoute["searchSchema"] & ParamSchema<TSearch> = TRoute["searchSchema"] & ParamSchema<TSearch>,
-        >(route: TPath) {
-            const module = useImport(route);
-            return useTypedSearchParams<TSearch>(module.searchSchema!);
-        },
-        useLayoutLoaderData<
-            TPath extends keyof TLayouts & string,
-            TRoute extends TLayouts[TPath] = TLayouts[TPath],
-            TLoaderFunc extends TRoute["loader"] & LoaderFunction = TRoute["loader"] & LoaderFunction,
-        >(route: TPath) {
-            const loaderData = useRouteLoaderData(route);
-            return loaderData as ReturnType<TLoaderFunc>;
-        },
+        useNavigate: useTypedNavigate,
+        useSearchParams,
+        useParams: useTypedParams,
+        useLoaderData,
+        useMatch: useTypedMatch
     }
 }
-
 
 type SetAction<TData> = ((data: TData | undefined) => TData | undefined) | (TData | undefined);
 

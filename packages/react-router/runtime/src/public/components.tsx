@@ -9,7 +9,7 @@ import { forwardRef } from "react";
 import { AnyRouteData, TypedTo } from "../types";
 import { getBasicPath } from "../utils/typed";
 
-export const components = <
+export const createComponents = <
     TPages extends Record<string, AnyRouteData>,
 >() => {
     type Components = {

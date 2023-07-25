@@ -2,10 +2,9 @@ export const template = `// Generated Code, changes to this file will be overrid
 /* eslint-disable */
 
 import {
-  components,
-  pageHooks,
-  layoutHooks,
-  functions,
+  createComponents,
+  createHooks,
+  createFunctions,
   AllLinkProps,
   Route,
   ChildRoute,
@@ -30,10 +29,9 @@ export const routes = (options?: { defaultErrorComponent: React.ComponentType<an
 export type Pages = ExtractRouteDataMap<typeof pageImports>;
 export type Layouts = ExtractRouteDataMap<typeof layoutImports>;
 
-export const { Link, NavLink, Navigate } = components<Pages>();
-export const { useNavigate, useSearchParams, useLoaderData } = pageHooks<Pages>(pageImports);
-export const { useLayoutParams, useLayoutSearchParams, useLayoutLoaderData } = layoutHooks<Layouts>(layoutImports);
-export const { redirect } = functions<Pages>();
+export const { Link, NavLink, Navigate } = createComponents<Pages>();
+export const { useNavigate, useSearchParams, useLoaderData, useParams, useMatch } = createHooks<Pages, Layouts>({ pageImports, layoutImports });
+export const { matchPath, redirect } = createFunctions<Pages>();
 export { Outlet, useLocation } from "@router-cli/react-router";
 
 export type LinkProps<TPath extends keyof Pages = keyof Pages> = AllLinkProps<TPath, Pages>["link"];

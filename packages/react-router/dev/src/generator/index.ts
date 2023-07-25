@@ -143,7 +143,7 @@ export class Generator {
     private processRoute(srcPath: string, type: RouteType): RouteItem {
         const relativeSource = this.getRelativeSource(srcPath);
         const importSource = this.getImportSource(relativeSource);
-        const typedRoute = "/" + (transformRoute(relativeSource, this._config.hiddenDirectories) || "");
+        const typedRoute = "/" + (transformRoute(relativeSource, this._config.hiddenDirectories) || "") + (type === "layout" ? "/layout" : "");
         const fullRoute = typedRoute.replace("/$", "/:").replace("/$catchAll", "/*");
 
         return {

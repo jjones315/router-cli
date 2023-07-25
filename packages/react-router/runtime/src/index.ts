@@ -1,8 +1,8 @@
 
 
-export { components } from "./public/components";
-export { pageHooks, layoutHooks } from "./public/hooks";
-export { functions } from "./public/functions";
+export { createComponents } from "./public/components";
+export { createHooks } from "./public/hooks";
+export { createFunctions } from "./public/functions";
 export { Route, ChildRoute } from "./public/routes";
 
 export type {
@@ -20,4 +20,4 @@ export type {
 
 export type { AllLinkProps, TypedLinkBase } from "./public/components";
 export { createRoutes } from "./createRoutes";
-export { Outlet, useLocation, createBrowserRouter, createMemoryRouter, createHashRouter, RouterProvider, matchPath } from "react-router-dom";
+export { Outlet, useLocation, createBrowserRouter, createMemoryRouter, createHashRouter, RouterProvider } from "react-router-dom";

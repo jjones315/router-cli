@@ -1,5 +1,5 @@
 import { Route } from "./public/routes";
-import { ExtractSchema, ExtractRequiredSchema, ExtractLoader } from "./utils/types";
+import { ExtractSchema, ExtractRequiredSchema, ExtractRouteRequiredSchema, ExtractRouteSchema } from "./utils/types";
 
 export type MergeTypeFromParent<TParent extends {}, TChild extends {}> = TParent & TChild;
 
@@ -16,28 +16,28 @@ type LoaderArgs<
 export type ContentProps<
     TParams extends {} | never = never,
     TSearchParams extends {} | never = never,
-    TLoader = unknown
+    TLoader extends unknown = never,
 > = {
     useLocation: () => { path: string, hash: string }
-    useParams: () => TParams
     useSearch: () => [
         TSearchParams,
         (setter: TSearchParams | ((current: TSearchParams) => TSearchParams)) => void
-    ],
+    ]
+    useParams: () => TParams
     useLoader: () => TLoader
 };
 
 type LoaderFunction<
     TParams extends {} | never = never,
     TSearchParams extends {} | never = never,
-    TResponse = unknown
+    TResponse extends unknown = never,
 > = (args: LoaderArgs<TParams, TSearchParams>) => Response | void | TResponse | Promise<Response | void | TResponse>;
 
 export interface ChildRouteOptions<
     TParentRoute extends RouteOptions<TParentParams, TParentSearchParams, any>,
     TChildParams extends {} | never = never,
     TChildSearchParams extends {} | never = never,
-    TLoader = unknown,
+    TLoader extends unknown = never,
     TParentParams extends {} | never = never,
     TParentSearchParams extends {} | never = never,
     TParams extends MergeTypeFromParent<
@@ -62,7 +62,7 @@ export interface ChildRouteOptions<
 export interface RouteOptions<
     TParams extends {} | never = never,
     TSearchParams extends {} | never = never,
-    TLoader = unknown,
+    TLoader extends unknown = never,
 > {
     Error?: React.FC;
     Pending?: React.FC;
@@ -76,7 +76,7 @@ export interface RouteOptions<
 export interface RouteData<
     TParams extends {} | never = never,
     TSearchParams extends {} | never = never,
-    TLoader = unknown
+    TLoader extends unknown = never,
 > extends RouteOptions<TParams, TSearchParams, TLoader> {
     "__types": {
         params: TParams,
@@ -91,9 +91,7 @@ export type AnyRoute = Route<any, any, any>;
 export type TypedPath<TPath extends string> = { to: TPath; hash?: string; };
 
 
-
-
-export type TypedParamsSchema<T extends AnyRouteData, TSchema extends keyof T["__types"], TTypes extends SchemaTypes<T, TSchema> = SchemaTypes<T, TSchema>> =
+export type TypedParamsSchema<T extends AnyRouteData, TSchema extends keyof T["__types"], TTypes extends RouteSchemaTypes<T, TSchema> = RouteSchemaTypes<T, TSchema>> =
     TTypes["hasRequiredFields"] extends true
     ? { [key in TSchema]: TTypes["source"]; }
     : TTypes["hasAnyFields"] extends true
@@ -115,9 +113,9 @@ export type TypedTo<
 export type TypedToOrPath<
     TPath extends string,
     TRouteData extends AnyRouteData,
-> 
-    = ExtractRequiredSchema<TRouteData, "search"> extends false
-    ? ExtractRequiredSchema<TRouteData, "params"> extends false
+>
+    = ExtractRouteRequiredSchema<TRouteData, "search"> extends false
+    ? ExtractRouteRequiredSchema<TRouteData, "params"> extends false
     ? TPath | TypedTo<TPath, TRouteData>
     : TypedTo<TPath, TRouteData>
     : TypedTo<TPath, TRouteData>;
@@ -136,37 +134,14 @@ export type ParamSchemaFn<TReturn> = (
     searchObj: Record<string, unknown>,
 ) => TReturn
 
-export type SchemaTypes<T extends AnyRouteData, TSchema extends keyof T["__types"]> = {
-    hasAnyFields: ExtractSchema<T, TSchema> extends never ? false : true;
-    hasRequiredFields: ExtractRequiredSchema<T, TSchema> extends never ? false : true;
+export type RouteSchemaTypes<T extends AnyRouteData, TSchema extends keyof T["__types"]> = {
+    hasAnyFields: ExtractRouteSchema<T, TSchema> extends never ? false : true;
+    hasRequiredFields: ExtractRouteRequiredSchema<T, TSchema> extends never ? false : true;
     source: T["__types"][TSchema];
 }
 
-// export type SearchParamOptions<
-//     TRoutesInfo extends AnyRoutesInfo,
-//     TFrom,
-//     TTo,
-//     // Find the schema for the new path, and make optional any keys
-//     // that are already defined in the current schema
-//     TToSchema = Partial<
-//         RouteByPath<TRoutesInfo, TFrom>['__types']['fullSearchSchema']
-//     > &
-//     Omit<
-//         RouteByPath<TRoutesInfo, TTo>['__types']['fullSearchSchema'],
-//         keyof PickRequired<
-//             RouteByPath<TRoutesInfo, TFrom>['__types']['fullSearchSchema']
-//         >
-//     >,
-//     TFromFullSchema = UnionToIntersection<
-//         TRoutesInfo['fullSearchSchema'] & TFromSchema
-//     >,
-//     TToFullSchema = UnionToIntersection<
-//         TRoutesInfo['fullSearchSchema'] & TToSchema
-//     >,
-// > = keyof PickRequired<TToSchema> extends never
-//     ? {
-//         search?: true | SearchReducer<TFromFullSchema, TToFullSchema>
-//     }
-//     : {
-//         search: SearchReducer<TFromFullSchema, TToFullSchema>
-//     }
+export type SchemaTypes<T extends {} | never> = {
+    hasAnyFields: ExtractSchema<T> extends never ? false : true;
+    hasRequiredFields: ExtractRequiredSchema<T> extends never ? false : true;
+    source: T;
+}

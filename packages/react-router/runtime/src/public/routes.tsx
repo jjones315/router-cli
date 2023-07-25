@@ -1,3 +1,4 @@
+import React from "react";
 import { LazyRouteFunction, LoaderFunction, RouteObject, useLoaderData, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { ChildRouteOptions, ContentProps, MergeTypeFromParent, RouteData, RouteOptions } from "../types";
 import { guardLoader, useGuards } from "./guards";
@@ -74,7 +75,7 @@ export class Route<
                 useGuards(this.data.guard);
                 const useParams = useTypedParams(paramsSchema);
                 const useSearch = useTypedSearch(searchSchema);
-                return <ContentComponent useLoader={useLoaderData} useLocation={useTypedLocation} useParams={useParams as any} useSearch={useSearch as any} />
+                return <ContentComponent useLoader={useLoaderData as any} useLocation={useTypedLocation} useParams={useParams as any} useSearch={useSearch as any} />
             })
         };
     }
@@ -126,6 +127,14 @@ export class Route<
             },
             parent: this.data
         });
+    }
+
+    useParams(){
+        return useTypedParams(this.data.paramsSchema)() as this["data"]["__types"]["params"];
+    }
+
+    useSearch(){
+        return useTypedSearch<this["data"]["__types"]["search"]>(this.data.searchSchema)();
     }
 }
 

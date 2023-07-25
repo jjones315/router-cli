@@ -11,6 +11,18 @@ export type PickRequired<T> = {
     [K in keyof T as undefined extends T[K] ? never : K]: T[K]
 }
 
-export type ExtractRequiredSchema<T extends AnyRouteData, TSchema extends keyof T["__types"]> = keyof PickRequired<T["__types"][TSchema]> extends never ? never : PickRequired<T["__types"][TSchema]>;
-export type ExtractSchema<T extends AnyRouteData, TSchema extends keyof T["__types"]> = keyof T["__types"][TSchema] extends never ? never : T["__types"][TSchema];
-export type ExtractLoader<T extends AnyRouteData> = keyof T["__types"]["loader"] extends undefined ? never : T["__types"]["loader"];
+export type PickRoutesWithSchema<T extends Record<string, AnyRouteData>, TSchema extends keyof AnyRouteData["__types"]> = {
+    [K in keyof T as ExtractRouteSchema<T[K], TSchema> extends false ? never : K]: T[K]["__types"][TSchema]
+}
+
+export type PickRoutesWithLoader<T extends Record<string, AnyRouteData>> = {
+    [K in keyof T as ExtractRouteLoader<T[K]> extends false ? never : K]: T[K]["__types"]["params"];
+}
+
+export type ExtractRouteRequiredSchema<T extends AnyRouteData, TSchema extends keyof T["__types"]> = ExtractRequiredSchema<T["__types"][TSchema]>;;
+export type ExtractRouteSchema<T extends AnyRouteData, TSchema extends keyof T["__types"]> = ExtractSchema<T["__types"][TSchema]>;
+
+export type ExtractRequiredSchema<T extends {} | never> = keyof PickRequired<T> extends never ? never : PickRequired<T>;
+export type ExtractSchema<T extends {} | never> = keyof T extends never ? never : T;
+
+export type ExtractRouteLoader<T extends AnyRouteData> = T["__types"]["loader"] extends never ? never : T["__types"]["loader"];

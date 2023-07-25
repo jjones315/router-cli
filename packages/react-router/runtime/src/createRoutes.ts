@@ -36,33 +36,33 @@ const createTree = (routes: { layoutImports: Routes, pageImports: Routes }) => {
         }];
     }));
 
+    const layoutSuffixLength = "/layout".length;
     const layouts = new Map<string, RouteEntry>(layoutKeys.map((key) => {
-        const path = key.replaceAll("/$", "/:");
+        const path = key.replaceAll("/$", "/:").slice(0, -1 * layoutSuffixLength);
         return [key, {
             children: [],
             fullPath: path,
             relativePath: path,
             index: false,
-            id: key + "/layout",
+            id: key,
             route: routes.layoutImports[key],
         }];
     }));
 
-    for (const [layout, layoutRoute] of layouts) {
-        const data = layouts.get(layout);
-        if (!data) continue;
+    for (const layoutRoute of layouts.values()) {
+        if (!layoutRoute) continue;
 
-        for (const [routeKey, route] of result) {
-            const layoutRoutePrefix = layout + "/";
-            const isChild = routeKey.startsWith(layoutRoutePrefix);
-            const isIndex = routeKey === layout
+        for (const route of result.values()) {
+            const layoutPathPrefix = layoutRoute.fullPath + "/";
+            const isChild = route.fullPath.startsWith(layoutPathPrefix);
+            const isIndex = route.fullPath === layoutRoute.fullPath
             if (isChild || isIndex) {
                 // Remove route from map, we are going to move it to a child of this layout.
-                result.delete(routeKey);
+                result.delete(route.id);
 
                 // alter the path to be relative to the layout and remove any empty segments if the layout is also a endpoint.
                 route.relativePath = (route.relativePath
-                    .substring(layoutRoutePrefix.length, route.relativePath.length)
+                    .substring(layoutPathPrefix.length, route.relativePath.length)
                     .split("/")
                     .filter(Boolean)
                     .join("/")
@@ -73,7 +73,7 @@ const createTree = (routes: { layoutImports: Routes, pageImports: Routes }) => {
                 layoutRoute.children.push(route);
             }
         }
-        result.set(layout, layoutRoute);
+        result.set(layoutRoute.id, layoutRoute);
     }
 
     return Array.from(result.values());

@@ -1,11 +1,6 @@
-// let depth = 0;
-// function navigateTree(items: RouteItem[], parent: RouteItem | undefined) {
-//     depth += 2;
-//     const bracesIndent = getIndent(depth);
-//     const indent = getIndent(depth + 1);
-
 import { RouteObject } from "react-router-dom";
 import { Route } from "./public/routes";
+import React from "react";
 
 type Routes = Record<string, () => Promise<Route<any, any, any>>>;
 type AppRoutes = {
@@ -99,12 +94,12 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
 
     return [
         {
-            element: <appRoutes.app />,
+            element: React.createElement(appRoutes.app),
             children: [
                 ...tree.map(mapRoute),
                 {
                     path: '*',
-                    element: <appRoutes.notFound />,
+                    element: React.createElement(appRoutes.notFound),
                 }
             ]
         }

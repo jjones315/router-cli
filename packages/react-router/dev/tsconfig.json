@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "rootDir": "./src",
+        "moduleResolution": "node",
+        "isolatedModules": true,
+        "outDir": "./dist",
+        "allowSyntheticDefaultImports": true,
+        "declaration": true,
+        "pretty": true,
+        "skipLibCheck": true,
+        "removeComments": true,
+        "esModuleInterop": true,
+        "jsx": "react-jsx",
+        "strict": true,
+        "lib": [
+            "DOM",
+            "DOM.Iterable",
+            "ES2021"
+        ],
+        "target": "ES2019",
+    },
+    "include": ["./src/**/*"],
+    "exclude": [
+        "./src/**/*.test.ts",
+        "dist"
+    ],
+
+}

@@ -3,6 +3,7 @@ import { Route } from "./public/routes";
 import React from "react";
 import "./utils/createLazyRoute";
 import { createLazyRoute } from "./utils/createLazyRoute";
+import { suspendedPromiseCache } from "./hooks/useSuspendedPromise";
 
 type Routes = Record<string, () => Promise<Route<any, any, any>>>;
 type AppRoutes = {
@@ -85,7 +86,11 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
 
     const mapRoute = (node: RouteEntry): RouteObject => ({
         id: node.id,
-        lazy: () => node.route().then(x => createLazyRoute(x, options)),
+        lazy: () => node.route().then(x => {
+            // load the route into the module cache to be used in hooks.
+            suspendedPromiseCache.preloadValue(x, node.id);
+            return createLazyRoute(x, options);
+        }),
         ...(node.relativePath == "/" ? {
             index: true,
         } : {

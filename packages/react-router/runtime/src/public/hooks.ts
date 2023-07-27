@@ -32,8 +32,9 @@ export const createHooks = <
 
     const useImport = <TRoute extends keyof AllRoutes & string>(key: TRoute) => {
         const modulePromise = key.endsWith("/layout") ? layoutImports[key] : pageImports[key];
-        const getter = useSuspendedPromise(modulePromise(), [key]);
-        return getter as AllRoutes[TRoute];
+        // This "should" never suspend, since the route will be written to cache when the router resolves it.
+        const getter = useSuspendedPromise(modulePromise(), key);
+        return getter.data as AllRoutes[TRoute];
     }
 
     return {

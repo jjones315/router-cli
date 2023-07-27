@@ -36,64 +36,62 @@ export const createHooks = <
         return getter as AllRoutes[TRoute];
     }
 
-    function useTypedNavigate(){
-        const navigate = useNavigate();
-        return useCallback(<TPath extends keyof TPages & string>(route: TypedToOrPath<TPath, TPages[TPath]> | number, options?: NavigateOptions) => {
-            if (typeof route === "number") {
-                return navigate(route);
-            }
-            return navigate(getBasicPath(route), options);
-        }, [navigate]);
-    }
-
-    function useSearchParams<
-        TPath extends keyof AllRoutes & keyof RoutesWithSearchParams & string
-    >(route: TPath) {
-        const module = useImport(route);
-        return useTypedSearchParams<RoutesWithSearchParams[TPath]>(module.searchSchema!);
-    }
-
-    function useTypedParams<
-        TPath extends keyof AllRoutes & keyof RoutesWithParams & string
-    >(route: TPath): RoutesWithParams[TPath] {
-        const module = useImport(route);
-        const params = useParams();
-        const schema = module.paramsSchema!
-        return useMemo(() => parseSchema(params, schema), [schema, params]);
-    }
-
-    function useLoaderData<
-        TPath extends keyof AllRoutes & string,
-    >(route: TPath) {
-        const loaderData = useRouteLoaderData(route);
-        return loaderData as AllRoutes[TPath]["__types"]["loader"];
-    };
-    
-    function useTypedMatch<
-        TParamKey extends ParamParseKey<TPath>, 
-        TPath extends keyof AllRoutes & string
-    >(pattern: PathPattern<TPath> | TPath): PathMatch<TParamKey> | null {
-        let { pathname } = useLocation();
-        return useMemo(
-          () => matchPathLogic<TParamKey, TPath>(pattern, pathname),
-          [pathname, pattern]
-        );
-    };
-
     return {
-        useNavigate: useTypedNavigate,
-        useSearchParams,
-        useParams: useTypedParams,
-        useLoaderData,
-        useMatch: useTypedMatch
+        useNavigate() {
+            const navigate = useNavigate();
+            return useCallback(<TPath extends keyof TPages & string>(route: TypedToOrPath<TPath, TPages[TPath]> | number, options?: NavigateOptions) => {
+                if (typeof route === "number") {
+                    return navigate(route);
+                }
+                return navigate(getBasicPath(route), options);
+            }, [navigate]);
+        },
+        useSearch<TPath extends keyof AllRoutes & keyof RoutesWithSearchParams & string>(route: TPath) {
+            const module = useImport(route);
+            return useTypedSearch<RoutesWithSearchParams[TPath]>(module.searchSchema!);
+        },
+        useParams<TPath extends keyof AllRoutes & keyof RoutesWithParams & string>(route: TPath): RoutesWithParams[TPath] {
+            const module = useImport(route);
+            return useTypedParams(module.paramsSchema!);
+        },
+        useLoaderData<
+            TPath extends keyof AllRoutes & string,
+        >(route: TPath) {
+            const loaderData = useRouteLoaderData(route);
+            return loaderData as AllRoutes[TPath]["__types"]["loader"];
+        },
+        useMatch<
+            TParamKey extends ParamParseKey<TPath>,
+            TPath extends keyof AllRoutes & string
+        >(pattern: PathPattern<TPath> | TPath): PathMatch<TParamKey> | null {
+            let { pathname } = useLocation();
+            return useMemo(() => matchPathLogic<TParamKey, TPath>(pattern, pathname), [pathname, pattern]);
+        }
     }
 }
 
-type SetAction<TData> = ((data: TData | undefined) => TData | undefined) | (TData | undefined);
+export type SetAction<TData> = ((data: TData | undefined) => TData | undefined) | (TData | undefined);
 
-export function useTypedSearchParams<TData extends Record<string, unknown>>(schema: ParamSchema<TData>): [TData, (action: SetAction<TData>) => void] {
+
+export function useTypedSearch<TData extends Record<string, unknown>>(schema: ParamSchema<TData>): [TData, (action: SetAction<TData>) => void] {
+    if (!schema) {
+        throw new Error("useParams cannot be used on a route with no paramsSchema");
+    }
     const [searchParams, setSearchParams] = useSearchParams();
-    return getTypedSearchParamsResult(searchParams, setSearchParams, schema);
+
+    return [
+        useMemo(() => parseQuery(searchParams, schema), [searchParams, schema]),
+        useCallback((action: SetAction<TData>) => searchParamsSetter(action, setSearchParams, schema), [setSearchParams, schema]),
+    ];
+}
+
+export function useTypedParams<TData extends Record<string, unknown>>(schema: ParamSchema<TData>): TData {
+    if (!schema) {
+        throw new Error("useSearch cannot be used on a route with no searchSchema");
+    }
+    
+    const params = useParams();
+    return useMemo(() => parseSchema(params, schema), [schema, params]);
 }
 
 const searchParamsSetter = <TData extends Record<string, unknown>>(action: SetAction<TData>, setter: ReturnType<typeof useSearchParams>[1], schema: ParamSchema<TData>): any => {
@@ -113,16 +111,6 @@ const searchParamsSetter = <TData extends Record<string, unknown>>(action: SetAc
             setter(str);
         }
     }
-}
-
-export function getTypedSearchParamsResult<TData extends Record<string, unknown>>(
-    searchParams: ReturnType<typeof useSearchParams>[0],
-    setter: ReturnType<typeof useSearchParams>[1],
-    schema: ParamSchema<TData>): [TData, (action: SetAction<TData>) => void] {
-    return [
-        parseQuery(searchParams, schema),
-        (action) => searchParamsSetter(action, setter, schema)
-    ];
 }
 
 const validateSearchParams = <TData extends Record<string, unknown>>(schema: ParamSchema<TData>, data: TData): string => {

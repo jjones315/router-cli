@@ -7,7 +7,7 @@ type LoaderArgs<
     TParams extends {} | never = never,
     TSearchParams extends {} | never = never,
 > = {
-    path: string;
+    pathname: string;
     hash: string;
     params: () => TParams;
     search: () => TSearchParams;
@@ -18,7 +18,6 @@ export type ContentProps<
     TSearchParams extends {} | never = never,
     TLoader extends unknown = never,
 > = {
-    useLocation: () => { path: string, hash: string }
     useSearch: () => [
         TSearchParams,
         (setter: TSearchParams | ((current: TSearchParams) => TSearchParams)) => void

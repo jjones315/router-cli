@@ -22,7 +22,7 @@ export type PickRoutesWithLoader<T extends Record<string, AnyRouteData>> = {
 export type ExtractRouteRequiredSchema<T extends AnyRouteData, TSchema extends keyof T["__types"]> = ExtractRequiredSchema<T["__types"][TSchema]>;;
 export type ExtractRouteSchema<T extends AnyRouteData, TSchema extends keyof T["__types"]> = ExtractSchema<T["__types"][TSchema]>;
 
-export type ExtractRequiredSchema<T extends {} | never> = keyof PickRequired<T> extends never ? never : PickRequired<T>;
-export type ExtractSchema<T extends {} | never> = keyof T extends never ? never : T;
+export type ExtractRequiredSchema<T> = keyof PickRequired<T> extends never ? never : PickRequired<T>;
+export type ExtractSchema<T> = keyof T extends never ? never : T;
 
 export type ExtractRouteLoader<T extends AnyRouteData> = T["__types"]["loader"] extends never ? never : T["__types"]["loader"];

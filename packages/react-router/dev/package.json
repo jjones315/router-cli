@@ -3,7 +3,7 @@
   "author": "jjones315",
   "license": "MIT",
   "repository": "https://github.com/jjones315/router-cli.git",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "description": "File based routing cli for react-router-dom.",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"

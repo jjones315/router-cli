@@ -1,6 +1,8 @@
 import { RouteObject } from "react-router-dom";
 import { Route } from "./public/routes";
 import React from "react";
+import "./utils/createLazyRoute";
+import { createLazyRoute } from "./utils/createLazyRoute";
 
 type Routes = Record<string, () => Promise<Route<any, any, any>>>;
 type AppRoutes = {
@@ -83,7 +85,7 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
 
     const mapRoute = (node: RouteEntry): RouteObject => ({
         id: node.id,
-        lazy: () => node.route().then(x => x.lazy(options)),
+        lazy: () => node.route().then(x => createLazyRoute(x, options)),
         ...(node.relativePath == "/" ? {
             index: true,
         } : {

@@ -1,27 +1,31 @@
 import { z } from "zod";
 
-export const configSchema = z.object({
-    source: z.string().default("src/app"),
+
+
+const configSchemaBase = z.object({
     sourceAlias: z.string().optional(),
-    output: z.string().default("src/routes.ts"),
     hiddenDirectories: z.array(z.string()).default([]),
     formatter: z.union([
         z.literal("prettier"),
         z.literal("eslint")
+    ]).optional(),
+    type: z.union([
+        z.literal("browser"),
+        z.literal("memory"),
+        z.literal("hash")
     ]).optional(),
 });
 
-export const cliOptionsSchema = configSchema.extend({
+export const configSchema = configSchemaBase.extend({
+    source: z.string().default("src/app"),
+    output: z.string().default("src/routes.ts"),
+});
+
+export const cliOptionsSchema = configSchemaBase.extend({
     config: z.string().optional(),
     verbose: z.coerce.boolean().default(false),
     source: z.string().optional(),
-    sourceAlias: z.string().optional(),
     output: z.string().optional(),
-    hiddenDirectories: z.array(z.string()).default([]),
-    formatter: z.union([
-        z.literal("prettier"),
-        z.literal("eslint")
-    ]).optional(),
 });
 
 export type RouterCliConfig = z.TypeOf<typeof configSchema>;

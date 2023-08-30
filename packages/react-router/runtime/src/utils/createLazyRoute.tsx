@@ -14,7 +14,7 @@ export function createLazyRoute<
     TParams extends {} = {},
     TSearchParams extends {} = {},
     TLoader = unknown
->(route: Route<TParams, TSearchParams, TLoader>, options?: { defaultErrorComponent: React.ComponentType<any> }): LazyRouteData {
+>(route: Route<TParams, TSearchParams, TLoader>, options?: { defaultErrorComponent?: React.ComponentType<any> }): LazyRouteData {
     const { paramsSchema, searchSchema } = route.data;
 
     let loader: undefined | LoaderFunction = undefined;
@@ -67,10 +67,12 @@ export function createLazyRoute<
         errorElement: ErrorComponent ? <ErrorComponent /> : undefined,
         Component: React.memo(() => {
             useGuards(route.data.guard);
+            const useParams = () => useTypedParams<TParams>(paramsSchema!);
+            const useSearch = () => useTypedSearch(searchSchema!);
             return <ContentComponent 
                 useLoader={useLoaderData as () => TLoader} 
-                useParams={route.useParams} 
-                useSearch={route.useSearch as any} 
+                useParams={useParams} 
+                useSearch={useSearch as any} 
             />
         })
     };

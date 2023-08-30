@@ -59,6 +59,20 @@ export const main = () => {
             describe: "Directories to ignore. ie [pages] would changes the source \"/users/pages/create.page.tsx\" in to the public route \"/users/create\"",
             type: "array",
         })
+        .option('formatter', {
+            alias: 'f',
+            describe: "format the outputted routes file. defaults to none.",
+            type: "string",
+            choices: ["eslint", "prettier", undefined],
+            default: undefined
+        })
+        .option('type', {
+            alias: 't',
+            describe: "type of router to create. defaults to browser.",
+            type: "string",
+            choices: ["browser", "memory", "hash"],
+            default: "browser"
+        })
         .option('verbose', {
             alias: "v",
             type: "boolean",

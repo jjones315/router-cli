@@ -19,12 +19,6 @@ export async function watch(config: RouterCliConfig, verbose: boolean) {
     watcher = chokidar.watch(config.source)
 
     watcher.on('ready', async () => {
-      try {
-        await generator.generate();
-      } catch (err) {
-        console.error(err)
-      }
-
       const handle = async () => {
         try {
           await generator.generate();
@@ -33,17 +27,15 @@ export async function watch(config: RouterCliConfig, verbose: boolean) {
         }
       }
 
-      watcher.on('change', (path) => {
-        log("updated", path);
-        handle();
-      });
+      const checkPath = (path: string) => (path.endsWith('.page.tsx') || path.endsWith('_layout.tsx'));
+
+      handle();
+
       watcher.on('add', (path) => {
-        log("created", path);
-        handle();
-      });
-      watcher.on('addDir', (path) => {
-        log("created", path);
-        handle();
+        if (checkPath(path)) {
+          log("created", path);
+          handle();
+        }
       });
       watcher.on('unlink', (path) => {
         log("removed", path);

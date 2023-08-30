@@ -20,7 +20,6 @@ export default function RouteGenerator(config: RouterCliConfig, verbose: boolean
                 }
             }
             server.watcher.on('add', listener)
-            server.watcher.on('change', listener)
             server.watcher.on('unlink', listener)
         },
         buildStart() {

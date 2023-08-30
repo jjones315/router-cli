@@ -1,14 +1,16 @@
-import { RouteObject } from "react-router-dom";
+import { Outlet, RouteObject } from "react-router-dom";
 import { Route } from "./public/routes";
-import React from "react";
+import React, { Fragment } from "react";
 import "./utils/createLazyRoute";
 import { createLazyRoute } from "./utils/createLazyRoute";
 import { suspendedPromiseCache } from "./hooks/useSuspendedPromise";
 
 type Routes = Record<string, () => Promise<Route<any, any, any>>>;
 type AppRoutes = {
-    app: React.ComponentType<any>;
-    notFound: React.ComponentType<any>;
+    app: React.ComponentType<any> | undefined;
+    notFound: React.ComponentType<any> | undefined;
+    error: React.ComponentType<any> | undefined;
+    pending: React.ComponentType<any> | undefined;
 };
 
 type RouteEntry = {
@@ -81,7 +83,7 @@ const createTree = (routes: { layoutImports: Routes, pageImports: Routes }) => {
 
     return Array.from(result.values());
 }
-export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Routes, pageImports: Routes, appRoutes: AppRoutes }, options?: { defaultErrorComponent: React.ComponentType<any> }): RouteObject[] => {
+export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Routes, pageImports: Routes, appRoutes: AppRoutes }): RouteObject[] => {
     const tree = createTree(otherRoutes);
 
     const mapRoute = (node: RouteEntry): RouteObject => ({
@@ -89,7 +91,7 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
         lazy: () => node.route().then(x => {
             // load the route into the module cache to be used in hooks.
             suspendedPromiseCache.preloadValue(x, node.id);
-            return createLazyRoute(x, options);
+            return createLazyRoute(x, { defaultErrorComponent: appRoutes.pending });
         }),
         ...(node.relativePath == "/" ? {
             index: true,
@@ -101,12 +103,12 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
 
     return [
         {
-            element: React.createElement(appRoutes.app),
+            element: React.createElement(appRoutes.app || Outlet),
             children: [
                 ...tree.map(mapRoute),
                 {
                     path: '*',
-                    element: React.createElement(appRoutes.notFound),
+                    element: React.createElement(appRoutes.notFound || Fragment),
                 }
             ]
         }

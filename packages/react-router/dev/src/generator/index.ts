@@ -2,7 +2,7 @@ import { RouterCliConfig } from "../schema";
 import * as fs from 'fs'
 import glob from "fast-glob";
 import * as loggingUtils from "../utils/logging";
-import { AppRoutes, RouteItem, RouteMap, RouteType } from "./types";
+import { AppRouteComponents, AppRoutes, RouteItem, RouteMap, RouteType, RouterType } from "./types";
 import { trimCharEnd } from "./utils/strings";
 import { transformRoute } from "./utils/code-scanning";
 import { CODE_NAMING, RouteData, populateTemplate } from "./code-gen";
@@ -41,9 +41,14 @@ export class Generator {
         }
 
         const imports: string[] = [];
+        const exports: string[] = [];
 
-        let appComponent: string | undefined = undefined;
-        let notFoundComponent: string | undefined = undefined;
+        const appRouteComponents: AppRouteComponents = {
+            app: false,
+            notFound: false,
+            error: false,
+            pending: false,
+        }
 
         for (const item of routes.pages.values()) {
             pages.imports.push(`"${item.typedRoute}": () => import("${item.importSource}").then(x => x.default)`);
@@ -56,28 +61,49 @@ export class Generator {
         }
 
         if (routes.appRoutes.app) {
-            imports.push(`import App from "${routes.appRoutes.app}"`);
-            appComponent = "App";
+            imports.push(`import App from "${routes.appRoutes.app}";`);
+            appRouteComponents.app = true;
         }
 
-
         if (routes.appRoutes.notFound) {
-            imports.push(`import NotFound from "${routes.appRoutes.notFound}"`);
-            notFoundComponent = "NotFound";
+            imports.push(`import NotFound from "${routes.appRoutes.notFound}";`);
+            appRouteComponents.notFound = true;
+        }
+
+        if (routes.appRoutes.error) {
+            imports.push(`import DefaultErrorComponent from "${routes.appRoutes.error}";`);
+            exports.push(`export { DefaultErrorComponent };`);
+            appRouteComponents.error = true;
+        }
+
+        if (routes.appRoutes.pending) {
+            imports.push(`import DefaultPendingComponent from "${routes.appRoutes.pending}";`);
+            exports.push(`export { DefaultPendingComponent };`);
+            appRouteComponents.pending = true;
+        }
+
+        let routerType: RouterType = "createBrowserRouter";
+
+        if(this._config.type === "hash"){
+            routerType = "createHashRouter";
+        }
+        if(this._config.type === "memory"){
+            routerType = "createMemoryRouter";
         }
 
         return populateTemplate({
             layouts,
             pages,
-            appComponent,
-            notFoundComponent,
+            appRouteComponents,
             imports,
+            exports,
+            routerType
         });
     }
 
     private async discoverRouteFiles() {
         const pagesPromise = await glob([
-            this._config.source + '/**/[\\w[-]*.page.tsx'
+            this._config.source + '/**/?($)[\\w-]*.page.tsx'
         ], { onlyFiles: true });
 
         const layoutsPromise = await glob([
@@ -86,7 +112,9 @@ export class Generator {
 
         const reservedRoutesPromise = await glob([
             this._config.source + '/_app.tsx',
-            this._config.source + '/_not-found.tsx'
+            this._config.source + '/_404.tsx',
+            this._config.source + '/_error.tsx',
+            this._config.source + '/_pending.tsx',
         ], { onlyFiles: true });
 
         const [pages, layouts, reservedRoutes] = await Promise.all([
@@ -114,16 +142,27 @@ export class Generator {
 
         if (reservedRoutes.length) {
             const app = reservedRoutes.find(x => x.endsWith("/_app.tsx"));
-            const notFound = reservedRoutes.find(x => x.endsWith("/_not-found.tsx"));
-
             if (app) {
                 const relativeSource = this.getRelativeSource(app);
                 appRoutes.app = this.getImportSource(relativeSource);
             }
 
+            const notFound = reservedRoutes.find(x => x.endsWith("/_404.tsx"));
             if (notFound) {
                 const relativeSource = this.getRelativeSource(notFound);
                 appRoutes.notFound = this.getImportSource(relativeSource);
+            }
+
+            const error = reservedRoutes.find(x => x.endsWith("/_error.tsx"));
+            if (error) {
+                const relativeSource = this.getRelativeSource(error);
+                appRoutes.error = this.getImportSource(relativeSource);
+            }
+
+            const pending = reservedRoutes.find(x => x.endsWith("/_pending.tsx"));
+            if (pending) {
+                const relativeSource = this.getRelativeSource(pending);
+                appRoutes.pending = this.getImportSource(relativeSource);
             }
         }
 
@@ -164,6 +203,7 @@ export class Generator {
 
     private writeFile(output: string) {
         if (this._currentOutput !== output && output) {
+            console.log("Writing Routes File.");
             fs.writeFileSync(this._config.output, output);
 
             if (this._config.formatter) {

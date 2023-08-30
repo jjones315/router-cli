@@ -1,19 +1,18 @@
 import { template } from "../template";
+import { RouterType, AppRouteComponents } from "../types";
 
 type PopulateTemplateArgs = {
     layouts: RouteData;
     pages: RouteData;
-    appComponent: string | undefined;
-    notFoundComponent: string | undefined;
+    appRouteComponents: AppRouteComponents,
     imports: string[];
+    exports: string[];
+    routerType: RouterType;
 };
 
 export type RouteData = {
     routes: string[];
     imports: string[];
-    // loaders: string[];
-    // paramSchemas: string[];
-    // searchParamSchemas: string[];
 };
 
 export const CODE_NAMING = {
@@ -25,7 +24,7 @@ export const CODE_NAMING = {
     layouts: "layoutImports"
 }
 
-export function populateTemplate({ pages, layouts, imports, appComponent, notFoundComponent }: PopulateTemplateArgs) {
+export function populateTemplate(args: PopulateTemplateArgs) {
     let content = template;
 
 
@@ -39,13 +38,17 @@ export function populateTemplate({ pages, layouts, imports, appComponent, notFou
         }
     }
 
-    replaceImportObject(layouts.imports, CODE_NAMING.layouts);
-    replaceImportObject(pages.imports, CODE_NAMING.pages);
+    replaceImportObject(args.layouts.imports, CODE_NAMING.layouts);
+    replaceImportObject(args.pages.imports, CODE_NAMING.pages);
 
-    content = content.replace("/*imports*/", imports.join("\n"));
+    content = content.replace("/*imports*/", args.imports.join("\n"));
+    content = content.replace("/*exports*/", args.exports.join("\n"));
+    content = content.replaceAll("/*{browserType}*/", args.routerType);
 
-    if(appComponent) content = content.replace("app: undefined,", `app: ${appComponent},`);
-    if(notFoundComponent) content = content.replace("notFound: undefined,", `notFound: ${notFoundComponent},`);
+    if(args.appRouteComponents.app) content = content.replace("app: undefined,", `app: App,`);
+    if(args.appRouteComponents.notFound) content = content.replace("notFound: undefined,", `notFound: NotFound,`);
+    if(args.appRouteComponents.error) content = content.replace("error: undefined,", `error: DefaultErrorComponent,`);
+    if(args.appRouteComponents.pending) content = content.replace("pending: undefined,", `pending: DefaultPendingComponent,`);
 
     return content;
 }

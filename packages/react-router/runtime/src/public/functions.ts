@@ -1,9 +1,9 @@
 import { ParamParseKey, PathMatch, PathPattern, matchPath as matchPathBase, redirect } from "react-router-dom"
-import { AnyRouteData, TypedTo } from "../types";
+import { AnyRouteComponent, TypedTo } from "../types";
 import { getBasicPath } from "../utils/typed";
 
 export const createFunctions = <
-    TPages extends Record<string, AnyRouteData>
+    TPages extends Record<string, AnyRouteComponent>
 >() => {
     type Init = number | ResponseInit
     return {

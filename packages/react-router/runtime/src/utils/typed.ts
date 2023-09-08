@@ -1,9 +1,9 @@
 import { Path, generatePath } from "react-router-dom";
-import { AnyRouteData, TypedTo, TypedToOrPath } from "../types";
+import { AnyRouteComponent, TypedTo, TypedToOrPath } from "../types";
 import searchParamUtilities from "./searchParams";
 
 export const getBasicPath = <
-    TRoutes extends Record<string, AnyRouteData>,
+    TRoutes extends Record<string, AnyRouteComponent>,
     TPath extends keyof TRoutes & string,
     TRoute extends TRoutes[TPath] = TRoutes[TPath]
 >(toOrPath: TypedToOrPath<TPath, TRoute>): Partial<Path> => {

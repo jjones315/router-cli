@@ -9,7 +9,7 @@ import {
     useRouteLoaderData,
     useSearchParams
 } from 'react-router-dom';
-import { ParamSchema, AnyRouteData, TypedToOrPath, AnyRoute } from '../types';
+import { ParamSchema, TypedToOrPath, AnyRouteComponent } from '../types';
 import { useCallback, useMemo } from 'react';
 import { parseQuery } from '../utils/requestParser';
 import { getBasicPath } from '../utils/typed';
@@ -20,11 +20,11 @@ import { PickRoutesWithSchema } from '../utils/types';
 import { matchPathLogic } from './functions';
 
 export const createHooks = <
-    TPages extends Record<string, AnyRouteData>,
-    TLayouts extends Record<string, AnyRouteData>,
+    TPages extends Record<string, AnyRouteComponent>,
+    TLayouts extends Record<string, AnyRouteComponent>,
 >({ pageImports, layoutImports }: {
-    pageImports: Record<keyof TPages, () => Promise<AnyRoute>>,
-    layoutImports: Record<keyof TLayouts, () => Promise<AnyRoute>>,
+    pageImports: Record<keyof TPages, () => Promise<AnyRouteComponent>>,
+    layoutImports: Record<keyof TLayouts, () => Promise<AnyRouteComponent>>,
 }) => {
     type AllRoutes = TPages & TLayouts;
     type RoutesWithParams = PickRoutesWithSchema<AllRoutes, "params">;
@@ -34,7 +34,7 @@ export const createHooks = <
         const modulePromise = key.endsWith("/layout") ? layoutImports[key] : pageImports[key];
         // This "should" never suspend, since the route will be written to cache when the router resolves it.
         const getter = useSuspendedPromise(modulePromise(), key);
-        return getter.data as AllRoutes[TRoute];
+        return getter as AllRoutes[TRoute];
     }
 
     return {

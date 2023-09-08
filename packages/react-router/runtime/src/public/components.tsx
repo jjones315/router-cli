@@ -6,11 +6,11 @@ import {
     NavigateProps as BaseNavigateProps
 } from "react-router-dom";
 import { forwardRef } from "react";
-import { AnyRouteData, TypedTo } from "../types";
+import { AnyRouteComponent, TypedTo } from "../types";
 import { getBasicPath } from "../utils/typed";
 
 export const createComponents = <
-    TPages extends Record<string, AnyRouteData>,
+    TPages extends Record<string, AnyRouteComponent>,
 >() => {
     type Components = {
         Link: <TPath extends keyof TPages & string>(props: PropsWithoutRef<AllLinkProps<TPath, TPages>["link"]> & RefAttributes<HTMLAnchorElement> ) => ReturnType<ReturnType<typeof forwardRef<HTMLAnchorElement, AllLinkProps<TPath, TPages>["link"]>>>
@@ -40,13 +40,13 @@ type EmptyParams = { search?: never, params?: never }
 export type TypedLinkBase<
     TLinkProps,
     TPath extends string,
-    TRoute extends AnyRouteData,
+    TRoute extends AnyRouteComponent,
 > = Omit<TLinkProps, "to" | "params" | "search" | "hash"> & TypedTo<TPath, TRoute>;
 
 
 export interface AllLinkProps<
     TPath extends keyof TPages & string,
-    TPages extends Record<string, AnyRouteData>,
+    TPages extends Record<string, AnyRouteComponent>,
 > {
     link: TypedLinkBase<BaseLinkProps, TPath, TPages[TPath]>;
     navLink: TypedLinkBase<BaseNavLinkProps, TPath, TPages[TPath]>;

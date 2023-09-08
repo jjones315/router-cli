@@ -3,14 +3,12 @@
 export { createComponents } from "./public/components";
 export { createHooks } from "./public/hooks";
 export { createFunctions } from "./public/functions";
-export { Route, ChildRoute } from "./public/routes";
 
 export type {
     TypedTo,
     TypedToOrPath,
     RouteOptions,
-    ChildRouteOptions,
-    RouteData
+    RouteComponent
 } from "./types";
 
 export type {
@@ -20,4 +18,5 @@ export type {
 
 export type { AllLinkProps, TypedLinkBase } from "./public/components";
 export { createRoutes } from "./createRoutes";
+export { Route } from "./public/routes";
 export { Outlet, useLocation, createBrowserRouter, createMemoryRouter, createHashRouter, RouterProvider } from "react-router-dom";

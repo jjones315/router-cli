@@ -1,11 +1,11 @@
 import { Outlet, RouteObject } from "react-router-dom";
-import { Route } from "./public/routes";
 import React, { Fragment } from "react";
 import "./utils/createLazyRoute";
 import { createLazyRoute } from "./utils/createLazyRoute";
 import { suspendedPromiseCache } from "./hooks/useSuspendedPromise";
+import { AnyRouteComponent, RouteComponent } from "./types";
 
-type Routes = Record<string, () => Promise<Route<any, any, any>>>;
+type Routes = Record<string, () => Promise<AnyRouteComponent>>;
 type AppRoutes = {
     app: React.ComponentType<any> | undefined;
     notFound: React.ComponentType<any> | undefined;
@@ -18,7 +18,7 @@ type RouteEntry = {
     relativePath: string;
     id: string;
     index: boolean;
-    route: () => Promise<Route<any, any, any>>;
+    route: () => Promise<AnyRouteComponent>;
     children: RouteEntry[];
 }
 

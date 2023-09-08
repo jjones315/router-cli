@@ -1,7 +1,29 @@
-import { Route } from "./public/routes";
+import { SetAction } from "./public/hooks";
 import { ExtractSchema, ExtractRequiredSchema, ExtractRouteRequiredSchema, ExtractRouteSchema } from "./utils/types";
 
-export type MergeTypeFromParent<TParent extends {}, TChild extends {}> = TParent & TChild;
+export type MergeTypeFromParent<TParent extends {}, TChild extends {}> = TParent extends never ? {poop: string} : {pee: string}
+
+
+type X = keyof never;
+type Test = MergeTypeFromParent<never, {child:string}>;
+
+export type RouteComponent<
+    TParams extends {} = {},
+    TSearchParams extends {} = {},
+    TLoader = unknown
+> 
+= Omit<RouteOptions<TParams, TSearchParams, TLoader>, "Content">
+& RouteOptions<TParams, TSearchParams, TLoader>["Content"]
+& {
+    useParams(): keyof TParams extends never ? never : TParams;
+    useSearch(): keyof TSearchParams extends never ? never : [TSearchParams, (action: SetAction<TSearchParams>) => void];
+    childRoute<
+        TChildParams extends {} = {},
+        TChildSearchParams extends {} = {},
+        TChildLoader = unknown
+    >(options: Omit<RouteOptions<TChildParams, TChildSearchParams, TChildLoader, TParams, TSearchParams>, "__types" | "parent">): RouteComponent<MergeTypeFromParent<TChildParams, TParams>, MergeTypeFromParent<TChildSearchParams, TSearchParams>, TChildLoader>;
+}
+
 
 type LoaderArgs<
     TParams extends {} | never = never,
@@ -32,65 +54,34 @@ type LoaderFunction<
     TResponse extends unknown = never,
 > = (args: LoaderArgs<TParams, TSearchParams>) => Response | void | TResponse | Promise<Response | void | TResponse>;
 
-export interface ChildRouteOptions<
-    TParentRoute extends RouteOptions<TParentParams, TParentSearchParams, any>,
-    TChildParams extends {} | never = never,
-    TChildSearchParams extends {} | never = never,
-    TLoader extends unknown = never,
-    TParentParams extends {} | never = never,
-    TParentSearchParams extends {} | never = never,
-    TParams extends MergeTypeFromParent<
-        TParentParams,
-        TChildParams
-    > = MergeTypeFromParent<TParentParams, TChildParams>,
-    TSearchParams extends MergeTypeFromParent<
-        TParentSearchParams,
-        TChildSearchParams
-    > = MergeTypeFromParent<TParentSearchParams, TChildSearchParams>,
-> {
-    Error?: React.FC;
-    Pending?: React.FC;
-    Content: React.FC<ContentProps<TParams, TSearchParams, TLoader>>;
-    paramsSchema?: ParamSchema<TChildParams>;
-    searchSchema?: ParamSchema<TChildSearchParams>;
-    loader?: LoaderFunction<TParams, TSearchParams, TLoader>;
-    guard?: () => {};
-    parent: TParentRoute;
-};
-
 export interface RouteOptions<
     TParams extends {} | never = never,
     TSearchParams extends {} | never = never,
     TLoader extends unknown = never,
+    TParentParams extends {} | never = never,
+    TParentSearchParams extends {} | never = never,
 > {
     Error?: React.FC;
     Pending?: React.FC;
-    Content: React.FC<ContentProps<TParams, TSearchParams, TLoader>>;
+    Content: React.FC<ContentProps<MergeTypeFromParent<TParentParams, TParams>, MergeTypeFromParent<TParentSearchParams, TSearchParams>, TLoader>>;
     paramsSchema?: ParamSchema<TParams>;
     searchSchema?: ParamSchema<TSearchParams>;
     loader?: LoaderFunction<TParams, TSearchParams, TLoader>;
     guard?: () => {};
-};
-
-export interface RouteData<
-    TParams extends {} | never = never,
-    TSearchParams extends {} | never = never,
-    TLoader extends unknown = never,
-> extends RouteOptions<TParams, TSearchParams, TLoader> {
     "__types": {
         params: TParams,
         search: TSearchParams;
         loader: TLoader
+        parentParams: TParentParams
+        parentSearchParams: TParentSearchParams,
+        mergedParams: MergeTypeFromParent<TParentParams, TParams>,
+        mergedSearchParams: MergeTypeFromParent<TParentSearchParams, TSearchParams>,
     }
 };
 
-export type AnyRouteData = RouteData<any, any, any>;
-export type AnyRoute = Route<any, any, any>;
-
+export type AnyRouteComponent = RouteComponent<any, any, any>;
 export type TypedPath<TPath extends string> = { to: TPath; hash?: string; };
-
-
-export type TypedParamsSchema<T extends AnyRouteData, TSchema extends keyof T["__types"], TTypes extends RouteSchemaTypes<T, TSchema> = RouteSchemaTypes<T, TSchema>> =
+export type TypedParamsSchema<T extends AnyRouteComponent, TSchema extends keyof T["__types"], TTypes extends RouteSchemaTypes<T, TSchema> = RouteSchemaTypes<T, TSchema>> =
     TTypes["hasRequiredFields"] extends true
     ? { [key in TSchema]: TTypes["source"]; }
     : TTypes["hasAnyFields"] extends true
@@ -98,11 +89,10 @@ export type TypedParamsSchema<T extends AnyRouteData, TSchema extends keyof T["_
     : {}
 
 
-export type TypedSearchParams<TRouteData extends AnyRouteData> = TRouteData extends RouteData<any, {}, any> ? { search: TRouteData["__types"]["search"]; } : { search?: TRouteData["__types"]["search"] };
-
+export type TypedSearchParams<TRouteData extends AnyRouteComponent> = TRouteData extends RouteOptions<any, {}, any> ? { search: TRouteData["__types"]["search"]; } : { search?: TRouteData["__types"]["search"] };
 export type TypedTo<
     TPath extends string,
-    TRouteData extends AnyRouteData,
+    TRouteData extends AnyRouteComponent,
 >
     = TypedPath<TPath>
     & TypedParamsSchema<TRouteData, "search">
@@ -111,13 +101,13 @@ export type TypedTo<
 
 export type TypedToOrPath<
     TPath extends string,
-    TRouteData extends AnyRouteData,
+    TRoute extends AnyRouteComponent,
 >
-    = ExtractRouteRequiredSchema<TRouteData, "search"> extends false
-    ? ExtractRouteRequiredSchema<TRouteData, "params"> extends false
-    ? TPath | TypedTo<TPath, TRouteData>
-    : TypedTo<TPath, TRouteData>
-    : TypedTo<TPath, TRouteData>;
+    = ExtractRouteRequiredSchema<TRoute, "search"> extends false
+    ? ExtractRouteRequiredSchema<TRoute, "params"> extends false
+    ? TPath | TypedTo<TPath, TRoute>
+    : TypedTo<TPath, TRoute>
+    : TypedTo<TPath, TRoute>;
 
 
 
@@ -130,10 +120,10 @@ export type ParamSchemaObj<TReturn> = {
 }
 
 export type ParamSchemaFn<TReturn> = (
-    searchObj: Record<string, unknown>,
+    obj: Record<string, unknown>,
 ) => TReturn
 
-export type RouteSchemaTypes<T extends AnyRouteData, TSchema extends keyof T["__types"]> = {
+export type RouteSchemaTypes<T extends AnyRouteComponent, TSchema extends keyof T["__types"]> = {
     hasAnyFields: ExtractRouteSchema<T, TSchema> extends never ? false : true;
     hasRequiredFields: ExtractRouteRequiredSchema<T, TSchema> extends never ? false : true;
     source: T["__types"][TSchema];

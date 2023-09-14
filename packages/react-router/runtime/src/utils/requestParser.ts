@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from 'react-router-dom';
 import searchParamUtilities from "./searchParams";
 import { ParamSchema } from '../types';
 import { parseSchema } from './schemaParser';
+import { createErrorResponse } from './errors';
 
 type Params = LoaderFunctionArgs['params'];
 
@@ -84,15 +85,4 @@ function isURLSearchParams(value: unknown): value is URLSearchParams {
 
 function getObjectTypeName(value: unknown): string {
     return toString.call(value).slice(8, -1);
-}
-
-function createErrorResponse(
-    options: {
-        message?: string;
-        status?: number;
-    } = {}
-): Response {
-    const statusText = options?.message || "Bad Request";
-    const status = options?.status || 400;
-    return new Response(statusText, { status, statusText });
 }

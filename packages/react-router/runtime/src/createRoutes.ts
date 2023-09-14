@@ -91,7 +91,8 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
         lazy: () => node.route().then(x => {
             // load the route into the module cache to be used in hooks.
             suspendedPromiseCache.preloadValue(x, node.id);
-            return createLazyRoute(x, { defaultErrorComponent: appRoutes.pending });
+            const lazyData = createLazyRoute(x, { defaultErrorComponent: appRoutes.error });
+            return lazyData;
         }),
         ...(node.relativePath == "/" ? {
             index: true,

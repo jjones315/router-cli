@@ -18,5 +18,5 @@ export type {
 
 export type { AllLinkProps, TypedLinkBase } from "./public/components";
 export { createRoutes } from "./createRoutes";
-export { Route } from "./public/routes";
+export { createRoute } from "./public/routes";
 export { Outlet, useLocation, createBrowserRouter, createMemoryRouter, createHashRouter, RouterProvider } from "react-router-dom";

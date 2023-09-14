@@ -1,70 +1,68 @@
-import { RouteOptions, MergeTypeFromParent, RouteComponent } from "../types";
+import { useLoaderData } from "react-router-dom";
+import { RouteOptions, MergeTypeFromParent, RouteComponent, AnyRouteComponent } from "../types";
 import { parseSchema } from "../utils/schemaParser";
-import { SetAction, useTypedParams, useTypedSearch } from "./hooks";
+import { useTypedParams, useTypedSearch } from "./hooks";
 
-// export function route< 
-//     TParams extends {} = {},
-//     TSearchParams extends {} = {},
-//     TLoader = unknown,
-// >(options: Omit<RouteOptions<TParams, TSearchParams, TLoader>, "__types">): RouteComponent<TParams, TSearchParams, TLoader> {
-//     const result: any = options.Content;
-    // result.Error = options.Error;
-    // result.Pending = options.Pending;
-    // result.paramsSchema = options.paramsSchema;
-    // result.searchSchema = options.searchSchema;
-    // result.loader = options.loader;
-    // result.guard = options.guard;
-    // result.useParams = () => {
-    //     return useTypedParams(options.paramsSchema!) as any;
-    // };
-    // result.useSearch = () => {
-    //     return useTypedSearch<TSearchParams>(options.searchSchema!) as any;
-    // };
-    // result.childRoute = <
-    //     TChildParams extends {} = {},
-    //     TChildSearchParams extends {} = {},
-    //     TChildLoader = unknown
-    // >(childOptions: Omit<RouteOptions<TChildParams, TChildSearchParams, TChildLoader, TParams, TSearchParams>, "__types" | "parent">): Route<MergeTypeFromParent<TChildParams, TParams>, MergeTypeFromParent<TChildSearchParams, TSearchParams>, TChildLoader> => {
-    //     type types = Omit<RouteOptions<TChildParams, TChildSearchParams, TChildLoader, TParams, TSearchParams>, "parent">["__types"];
-    //     return route<
-    //         types["mergedParams"],
-    //         types["mergedSearchParams"],
-    //         types["loader"]
-    //     >({
-    //         Content: childOptions.Content as any,
-    //         loader: childOptions.loader as any,
-    //         Error: childOptions.Error,
-    //         Pending: childOptions.Pending,
-    //         guard: childOptions.guard,
-    //         paramsSchema(src) {
-    //             return {
-    //                 ...(options.paramsSchema ? parseSchema(src, options.paramsSchema) : {}),
-    //                 ...(childOptions.paramsSchema ? parseSchema(src, childOptions.paramsSchema) : {}),
-    //             } as any;
-    //         },
-    //         searchSchema(src) {
-    //             return {
-    //                 ...(options.searchSchema ? parseSchema(src, options.searchSchema) : {}),
-    //                 ...(childOptions.searchSchema ? parseSchema(src, childOptions.searchSchema) : {}),
-    //             } as any;
-    //         },
-    //     });
-    // }
+export function createRoute<
+    TParams extends {} = {},
+    TSearchParams extends {} = {},
+    TLoader = unknown,
+    TParentRoute extends AnyRouteComponent = AnyRouteComponent
+>(content: React.FC, options?: Omit<RouteOptions<TParams, TSearchParams, TLoader, TParentRoute>, "__types">): RouteComponent<TParams, TSearchParams, TLoader, TParentRoute> {
+    //@ts-expect-error
+    content.routeData = {
+        Error: options?.Error,
+        Pending: options?.Pending,
+        paramsSchema: options?.paramsSchema,
+        searchSchema: options?.searchSchema,
+        disableDefaultErrorComponent: options?.disableDefaultErrorComponent,
+        disableDefaultPendingComponent: options?.disableDefaultPendingComponent,
+        loader: options?.loader
+    };
 
-//     return result;
-// }
+    //@ts-expect-error
+    content.useParams = () => useTypedParams(options?.paramsSchema!);
 
+    //@ts-expect-error
+    content.useSearch = () => useTypedSearch<TSearchParams>(options?.searchSchema!);
+    
+    //@ts-expect-error
+    content.useSearch = () => useTypedSearch<TSearchParams>(options?.searchSchema!);
 
-export function Route<TParams extends {} = {}, TSearchParams extends {} = {}, TLoader = unknown>(
-    options: Omit<RouteOptions<TParams, TSearchParams, TLoader>, "__types">,
-): RouteComponent<TParams, TSearchParams, TLoader> {
-    const result: any = options.Content;
-    result.Error = options.Error;
-    result.Pending = options.Pending;
-    result.paramsSchema = options.paramsSchema;
-    result.searchSchema = options.searchSchema;
-    result.loader = options.loader;
-    result.guard = options.guard;
+    //@ts-expect-error
+    content.useLoader = () => useLoaderData();
 
-    return result;
+    //@ts-expect-error
+    content.childRoute = <
+        TChildParams extends {} = {},
+        TChildSearchParams extends {} = {},
+        TChildLoader = unknown
+    >(
+        content: React.FC,
+        childOptions?: Omit<RouteOptions<TChildParams, TChildSearchParams, TChildLoader, RouteComponent<TParams, TSearchParams, TLoader, TParentRoute>>, "__types">
+    ): RouteComponent<MergeTypeFromParent<TChildParams, TParams>, MergeTypeFromParent<TChildSearchParams, TSearchParams>, TChildLoader> => {
+        return createRoute(content, {
+            parentRoute: content as any,
+            loader: childOptions?.loader as any,
+            Error: childOptions?.Error,
+            Pending: childOptions?.Pending,
+            disableDefaultErrorComponent: options?.disableDefaultErrorComponent,
+            disableDefaultPendingComponent: options?.disableDefaultPendingComponent,
+            paramsSchema(src) {
+                return {
+                    ...(options?.paramsSchema ? parseSchema(src, options?.paramsSchema) : {}),
+                    ...(childOptions?.paramsSchema ? parseSchema(src, childOptions?.paramsSchema) : {}),
+                } as any;
+            },
+            searchSchema(src) {
+                return {
+                    ...(options?.searchSchema ? parseSchema(src, options?.searchSchema) : {}),
+                    ...(childOptions?.searchSchema ? parseSchema(src, childOptions?.searchSchema) : {}),
+                } as any;
+            },
+        }) as any;
+    }
+
+    //@ts-expect-error
+    return content;
 }

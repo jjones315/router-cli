@@ -7,7 +7,7 @@ import {
   createHooks,
   createFunctions,
   AllLinkProps,
-  Route,
+  createRoute,
   ExtractRouteDataMap,
   TypedTo,
   TypedToOrPath,
@@ -47,7 +47,7 @@ export type To<TPath extends Routes = Routes> = TypedTo<TPath, Pages[TPath]>;
 export type ToOrPath<TPath extends Routes = Routes> = TypedToOrPath<TPath, Pages[TPath]>;
 
 export {
-  Route,
+  createRoute,
 };
 
 /*exports*/

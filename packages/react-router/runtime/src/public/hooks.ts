@@ -49,17 +49,17 @@ export const createHooks = <
         },
         useSearch<TPath extends keyof AllRoutes & keyof RoutesWithSearchParams & string>(route: TPath) {
             const module = useImport(route);
-            return useTypedSearch<RoutesWithSearchParams[TPath]>(module.searchSchema!);
+            return useTypedSearch<RoutesWithSearchParams[TPath]>(module.routeData.searchSchema!);
         },
         useParams<TPath extends keyof AllRoutes & keyof RoutesWithParams & string>(route: TPath): RoutesWithParams[TPath] {
             const module = useImport(route);
-            return useTypedParams(module.paramsSchema!);
+            return useTypedParams(module.routeData.paramsSchema!);
         },
         useLoaderData<
             TPath extends keyof AllRoutes & string,
         >(route: TPath) {
             const loaderData = useRouteLoaderData(route);
-            return loaderData as AllRoutes[TPath]["__types"]["loader"];
+            return loaderData as AllRoutes[TPath]["routeData"]["__types"]["loader"];
         },
         useMatch<
             TParamKey extends ParamParseKey<TPath>,

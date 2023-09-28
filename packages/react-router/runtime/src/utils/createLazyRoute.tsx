@@ -16,11 +16,6 @@ export function createLazyRoute<
 
     if (typeof route.routeData.loader === "function") {
         loader = ({ params, request }) => {
-            // var guard = route.routeData.guard ? guardLoader(route.routeData.guard) : null;
-            // if (guard !== null) {
-            //     return guard;
-            // }
-
             const url = new URL(request.url);
             return route.routeData.loader?.({
                 hash: url.hash,
@@ -57,13 +52,21 @@ export function createLazyRoute<
         }
 
         return <Content  />;
-    })
+    });
+
+    function useGuards(){
+        if(route.routeData.useGuards){
+            return route.routeData.useGuards();
+        }
+        return true;
+    }
 
     return {
         loader: loader,
         errorElement: ErrorComponent ? <ErrorComponent /> : undefined,
         Component: React.memo(() => {
-            return <ContentComponent />
+            const shouldRender = useGuards();
+            return shouldRender ? <ContentComponent /> : null;
         })
     };
 }

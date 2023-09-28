@@ -15,7 +15,6 @@ export type RouteComponent<
     } & {
         useParams(): keyof TParams extends never ? never : TParams;
         useSearch(): keyof TSearchParams extends never ? never : [TSearchParams, (action: SetAction<TSearchParams>) => void];
-        useLoader(): TLoader;
         childRoute<
             TChildParams extends {} = {},
             TChildSearchParams extends {} = {},
@@ -47,13 +46,13 @@ export interface RouteOptions<
 > {
     Error?: React.FC;
     Pending?: React.FC;
+    useGuards?: () => boolean | void | null | undefined;
     paramsSchema?: ParamSchema<TParams>;
     searchSchema?: ParamSchema<TSearchParams>;
     loader?: LoaderFunction<TParams, TSearchParams, TLoader>;
     parentRoute?: TParentRoute,
     disableDefaultPendingComponent?: boolean,
     disableDefaultErrorComponent?: boolean,
-    //guard?: () => {};
     "__types": {
         params: TParams,
         search: TSearchParams;

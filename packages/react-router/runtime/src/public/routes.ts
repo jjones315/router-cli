@@ -17,7 +17,8 @@ export function createRoute<
         searchSchema: options?.searchSchema,
         disableDefaultErrorComponent: options?.disableDefaultErrorComponent,
         disableDefaultPendingComponent: options?.disableDefaultPendingComponent,
-        loader: options?.loader
+        loader: options?.loader,
+        useGuards: options?.useGuards,
     };
 
     //@ts-expect-error
@@ -26,12 +27,6 @@ export function createRoute<
     //@ts-expect-error
     content.useSearch = () => useTypedSearch<TSearchParams>(options?.searchSchema!);
     
-    //@ts-expect-error
-    content.useSearch = () => useTypedSearch<TSearchParams>(options?.searchSchema!);
-
-    //@ts-expect-error
-    content.useLoader = () => useLoaderData();
-
     //@ts-expect-error
     content.childRoute = <
         TChildParams extends {} = {},
@@ -48,6 +43,7 @@ export function createRoute<
             Pending: childOptions?.Pending,
             disableDefaultErrorComponent: options?.disableDefaultErrorComponent,
             disableDefaultPendingComponent: options?.disableDefaultPendingComponent,
+            useGuards: childOptions?.useGuards,
             paramsSchema(src) {
                 return {
                     ...(options?.paramsSchema ? parseSchema(src, options?.paramsSchema) : {}),

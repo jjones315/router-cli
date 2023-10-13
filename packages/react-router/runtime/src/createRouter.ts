@@ -1,33 +1,25 @@
-import { Outlet, RouteObject } from "react-router-dom";
+import { Outlet, RouteObject, createBrowserRouter, createHashRouter } from "react-router-dom";
 import React, { Fragment } from "react";
 import "./utils/createLazyRoute";
 import { createLazyRoute } from "./utils/createLazyRoute";
 import { suspendedPromiseCache } from "./hooks/useSuspendedPromise";
-import { AnyRouteComponent, RouteComponent } from "./types";
-
-type Routes = Record<string, () => Promise<AnyRouteComponent>>;
-type AppRoutes = {
-    app: React.ComponentType<any> | undefined;
-    notFound: React.ComponentType<any> | undefined;
-    error: React.ComponentType<any> | undefined;
-    pending: React.ComponentType<any> | undefined;
-};
+import { AnyRouteComponent, AnyRouteImport, AnyRouteImports, AppRoutes } from "./types";
 
 type RouteEntry = {
     fullPath: string;
     relativePath: string;
     id: string;
     index: boolean;
-    route: () => Promise<AnyRouteComponent>;
+    route: AnyRouteImport;
     children: RouteEntry[];
 }
 
-const createTree = (routes: { layoutImports: Routes, pageImports: Routes }) => {
+const createTree = (routes: { layouts: AnyRouteImports, pages: AnyRouteImports }) => {
     // Sort layouts by the number of segments, then alphabetically, helps ensure the output matches so we don't trigger additional writes if watching.
-    const pageKeys = Object.keys(routes.pageImports).sort((a, b) => b.split("/").length - a.split("/").length || a.localeCompare(b));
+    const pageKeys = Object.keys(routes.pages).sort((a, b) => b.split("/").length - a.split("/").length || a.localeCompare(b));
 
     // Sort layouts by the number of segments.
-    const layoutKeys = Object.keys(routes.layoutImports).sort((a, b) => b.split("/").length - a.split("/").length);
+    const layoutKeys = Object.keys(routes.layouts).sort((a, b) => b.split("/").length - a.split("/").length);
 
     const result = new Map<string, RouteEntry>(pageKeys.map((key) => {
         const path = key.replaceAll("/$", "/:");
@@ -37,7 +29,7 @@ const createTree = (routes: { layoutImports: Routes, pageImports: Routes }) => {
             relativePath: path,
             index: false,
             id: key,
-            route: routes.pageImports[key],
+            route: routes.pages[key],
         }];
     }));
 
@@ -50,7 +42,7 @@ const createTree = (routes: { layoutImports: Routes, pageImports: Routes }) => {
             relativePath: path,
             index: false,
             id: key,
-            route: routes.layoutImports[key],
+            route: routes.layouts[key],
         }];
     }));
 
@@ -83,7 +75,7 @@ const createTree = (routes: { layoutImports: Routes, pageImports: Routes }) => {
 
     return Array.from(result.values());
 }
-export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Routes, pageImports: Routes, appRoutes: AppRoutes }): RouteObject[] => {
+const createRoutes = ({ app, ...otherRoutes }: { layouts: AnyRouteImports, pages: AnyRouteImports, app: AppRoutes }): RouteObject[] => {
     const tree = createTree(otherRoutes);
 
     const mapRoute = (node: RouteEntry): RouteObject => ({
@@ -91,7 +83,7 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
         lazy: () => node.route().then(x => {
             // load the route into the module cache to be used in hooks.
             suspendedPromiseCache.preloadValue(x, node.id);
-            const lazyData = createLazyRoute(x, { defaultErrorComponent: appRoutes.error });
+            const lazyData = createLazyRoute(x, { defaultErrorComponent: app.error });
             return lazyData;
         }),
         ...(node.relativePath == "/" ? {
@@ -104,14 +96,19 @@ export const createRoutes = ({ appRoutes, ...otherRoutes }: { layoutImports: Rou
 
     return [
         {
-            element: React.createElement(appRoutes.app || Outlet),
+            element: React.createElement(app.app || Outlet),
             children: [
                 ...tree.map(mapRoute),
                 {
                     path: '*',
-                    element: React.createElement(appRoutes.notFound || Fragment),
+                    element: React.createElement(app.notFound || Fragment),
                 }
             ]
         }
     ]
-} 
+}
+
+export function createTypedRouter(params: { layouts: AnyRouteImports, pages: AnyRouteImports, app: AppRoutes }) {
+    const routes = createRoutes(params);
+    return createBrowserRouter(routes);
+}

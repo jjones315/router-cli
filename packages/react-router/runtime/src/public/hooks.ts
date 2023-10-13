@@ -9,34 +9,18 @@ import {
     useRouteLoaderData,
     useSearchParams
 } from 'react-router-dom';
-import { ParamSchema, TypedToOrPath, AnyRouteComponent } from '../types';
+import { ParamSchema, TypedToOrPath, AnyRouteImports, AnyRouteComponents } from '../types';
 import { useCallback, useMemo } from 'react';
 import { parseQuery } from '../utils/requestParser';
 import { getBasicPath } from '../utils/typed';
 import searchParamUtilities from '../utils/searchParams';
 import { useSuspendedPromise } from '../hooks/useSuspendedPromise';
 import { parseSchema } from '../utils/schemaParser';
-import { PickRoutesWithSchema } from '../utils/types';
+import { ExtractRouteDataMap, PickRoutesWithSchema } from '../utils/types';
 import { matchPathLogic } from './functions';
 
-export const createHooks = <
-    TPages extends Record<string, AnyRouteComponent>,
-    TLayouts extends Record<string, AnyRouteComponent>,
->({ pageImports, layoutImports }: {
-    pageImports: Record<keyof TPages, () => Promise<AnyRouteComponent>>,
-    layoutImports: Record<keyof TLayouts, () => Promise<AnyRouteComponent>>,
-}) => {
+export function createTypedHooks<TPages extends AnyRouteComponents, TLayouts extends AnyRouteComponents>() {
     type AllRoutes = TPages & TLayouts;
-    type RoutesWithParams = PickRoutesWithSchema<AllRoutes, "params">;
-    type RoutesWithSearchParams = PickRoutesWithSchema<AllRoutes, "search">;
-
-    const useImport = <TRoute extends keyof AllRoutes & string>(key: TRoute) => {
-        const modulePromise = key.endsWith("/layout") ? layoutImports[key] : pageImports[key];
-        // This "should" never suspend, since the route will be written to cache when the router resolves it.
-        const getter = useSuspendedPromise(modulePromise(), key);
-        return getter as AllRoutes[TRoute];
-    }
-
     return {
         useNavigate() {
             const navigate = useNavigate();
@@ -46,14 +30,6 @@ export const createHooks = <
                 }
                 return navigate(getBasicPath(route), options);
             }, [navigate]);
-        },
-        useSearch<TPath extends keyof AllRoutes & keyof RoutesWithSearchParams & string>(route: TPath) {
-            const module = useImport(route);
-            return useTypedSearch<RoutesWithSearchParams[TPath]>(module.routeData.searchSchema!);
-        },
-        useParams<TPath extends keyof AllRoutes & keyof RoutesWithParams & string>(route: TPath): RoutesWithParams[TPath] {
-            const module = useImport(route);
-            return useTypedParams(module.routeData.paramsSchema!);
         },
         useLoaderData<
             TPath extends keyof AllRoutes & string,
@@ -68,6 +44,36 @@ export const createHooks = <
             let { pathname } = useLocation();
             return useMemo(() => matchPathLogic<TParamKey, TPath>(pattern, pathname), [pathname, pattern]);
         }
+    }
+}
+
+export const createImportHooks = <TPageImports extends AnyRouteImports, TLayoutImports extends AnyRouteImports>({ pages, layouts }: {
+    pages: TPageImports,
+    layouts: TLayoutImports,
+}) => {
+    type Pages = ExtractRouteDataMap<TPageImports>;
+    type Layouts = ExtractRouteDataMap<TLayoutImports>;
+
+    type AllRoutes = Pages & Layouts;
+    type RoutesWithParams = PickRoutesWithSchema<AllRoutes, "params">;
+    type RoutesWithSearchParams = PickRoutesWithSchema<AllRoutes, "search">;
+
+    const useImport = <TRoute extends keyof AllRoutes & string>(key: TRoute) => {
+        const modulePromise = key.endsWith("/layout") ? layouts[key] : pages[key];
+        // This "should" never suspend, since the route will be written to cache when the router resolves it.
+        const getter = useSuspendedPromise(modulePromise(), key);
+        return getter as AllRoutes[TRoute];
+    }
+
+    return {
+        useSearch<TPath extends keyof AllRoutes & keyof RoutesWithSearchParams & string>(route: TPath) {
+            const module = useImport(route);
+            return useTypedSearch<RoutesWithSearchParams[TPath]>(module.routeData.searchSchema!);
+        },
+        useParams<TPath extends keyof AllRoutes & keyof RoutesWithParams & string>(route: TPath): RoutesWithParams[TPath] {
+            const module = useImport(route);
+            return useTypedParams(module.routeData.paramsSchema!);
+        },
     }
 }
 

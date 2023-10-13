@@ -61,6 +61,13 @@ export interface RouteOptions<
     }
 };
 
+export type AppRoutes = {
+    app: React.ComponentType<any> | undefined;
+    notFound: React.ComponentType<any> | undefined;
+    error: React.ComponentType<any> | undefined;
+    pending: React.ComponentType<any> | undefined;
+};
+
 export type AnyRouteComponent = RouteComponent<any, any, any, any>;
 export type AnyRouteOptions = RouteOptions<any, any, any, any>;
 export type TypedPath<TPath extends string> = { to: TPath; hash?: string; };
@@ -115,4 +122,14 @@ export type SchemaTypes<T extends {} | never> = {
     hasAnyFields: ExtractSchema<T> extends never ? false : true;
     hasRequiredFields: ExtractRequiredSchema<T> extends never ? false : true;
     source: T;
+}
+
+export type AnyRouteImport = () => Promise<AnyRouteComponent>;
+export type AnyRouteImports = Record<string, () => Promise<AnyRouteComponent>>;
+export type AnyRouteComponents = Record<string, AnyRouteComponent>;
+
+export interface AnyRouter {
+    pages: AnyRouteImports;
+    layouts: AnyRouteImports;
+    app: AppRoutes;
 }

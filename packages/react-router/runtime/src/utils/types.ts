@@ -1,8 +1,8 @@
-import { AnyRouteComponent, AnyRouteOptions } from "../types";
+import { AnyRouteComponent, AnyRouteImport, AnyRouteImports, AnyRouteOptions } from "../types";
 
 
-export type ExtractRouteData<T extends () => Promise<AnyRouteOptions>> = Awaited<ReturnType<T>>;
-export type ExtractRouteDataMap<T extends Record<string, () => Promise<any>>> = {
+export type ExtractRouteData<T extends AnyRouteImport> = Awaited<ReturnType<T>>;
+export type ExtractRouteDataMap<T extends AnyRouteImports> = {
     [Prop in keyof T]: ExtractRouteData<T[Prop]>;
 }
 

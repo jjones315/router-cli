@@ -7,12 +7,15 @@ export const createFunctions = <
 >() => {
     type Init = number | ResponseInit
     return {
-        redirect: <TPath extends keyof TPages & string>(to: TypedTo<TPath, TPages[TPath]>, options?: Init) => {
+        redirect<TPath extends keyof TPages & string>(to: TypedTo<TPath, TPages[TPath]>, options?: Init)  {
             const { search, pathname, hash } = getBasicPath(to);
             return redirect(`${pathname || "/"}${search || ""}${hash || ""}`, options);
         },
-        matchPath: <TParamKey extends ParamParseKey<TPath>, TPath extends keyof TPages & string>(pattern: PathPattern<TPath> | TPath, pathname: string): PathMatch<TParamKey> | null => {
+        matchPath<TParamKey extends ParamParseKey<TPath>, TPath extends keyof TPages & string>(pattern: PathPattern<TPath> | TPath, pathname: string): PathMatch<TParamKey> | null  {
             return matchPathLogic(pattern, pathname);
+        },
+        makeLinkProps<TPath extends keyof TPages & string>(to: TypedTo<TPath, TPages[TPath]>) {
+            return to;
         },
     }
 }

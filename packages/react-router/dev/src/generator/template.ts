@@ -37,7 +37,7 @@ export type Layouts = ExtractRouteDataMap<typeof layoutImports>;
 
 export const { Link, NavLink, Navigate } = createComponents<Pages>();
 export const { useNavigate, useSearch, useLoaderData, useParams, useMatch } = createHooks<Pages, Layouts>({ pageImports, layoutImports });
-export const { matchPath, redirect } = createFunctions<Pages>();
+export const { matchPath, redirect, makeLinkProps } = createFunctions<Pages>();
 export { Outlet, useLocation } from "@router-cli/react-router";
 
 export type LinkProps<TPath extends Routes = Routes> = AllLinkProps<TPath, Pages>["link"];
